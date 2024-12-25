@@ -1,0 +1,14 @@
+#remove binaries file
+bootloader-apploader/GNU ARM v12.2.1 - Default/*.axf
+bootloader-apploader/GNU ARM v12.2.1 - Default/*.bin
+bootloader-apploader/GNU ARM v12.2.1 - Default/*.hex
+bootloader-apploader/GNU ARM v12.2.1 - Default/*.map
+bootloader-apploader/GNU ARM v12.2.1 - Default/*.out
+bootloader-apploader/GNU ARM v12.2.1 - Default/*.s37
+
+peripheral_bgm220P/GNU ARM v12.2.1 - Default/*.axf
+peripheral_bgm220P/GNU ARM v12.2.1 - Default/*.bin
+peripheral_bgm220P/GNU ARM v12.2.1 - Default/*.hex
+peripheral_bgm220P/GNU ARM v12.2.1 - Default/*.map
+peripheral_bgm220P/GNU ARM v12.2.1 - Default/*.out
+peripheral_bgm220P/GNU ARM v12.2.1 - Default/*.s37
