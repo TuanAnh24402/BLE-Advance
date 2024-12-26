@@ -12,3 +12,10 @@ peripheral_bgm220P/GNU ARM v12.2.1 - Default/*.hex
 peripheral_bgm220P/GNU ARM v12.2.1 - Default/*.map
 peripheral_bgm220P/GNU ARM v12.2.1 - Default/*.out
 peripheral_bgm220P/GNU ARM v12.2.1 - Default/*.s37
+
+central_bgm_220P/GNU ARM v12.2.1 - Default/*.axf
+central_bgm_220P/GNU ARM v12.2.1 - Default/*.bin
+central_bgm_220P/GNU ARM v12.2.1 - Default/*.hex
+central_bgm_220P/GNU ARM v12.2.1 - Default/*.map
+central_bgm_220P/GNU ARM v12.2.1 - Default/*.out
+central_bgm_220P/GNU ARM v12.2.1 - Default/*.s37

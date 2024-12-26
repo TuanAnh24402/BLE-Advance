@@ -36,15 +36,18 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MAX_CONNECTION              1
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = 0xff;
 bd_addr address;                           // Bluetooth device address
 uint8_t address_type;                      // Address type
 uint8_t handle;                            // Connection handle
+static uint8_t current_connections = 0;
+
 
 uint8_t adv_data[] = {
     0x02, 0x01, 0x06,
-    0x08, 0x08, 'S', 'e', 'r', 'v', 'e', 'r', '1',
+    0x08, 0x08, 'S', 'e', 'r', 'v', 'e', 'r', '2',
     0x03, 0x03, 0xFF, 0x00,
 };
 sl_status_t sc;
@@ -61,6 +64,7 @@ SL_WEAK void app_init(void)
   device_cmu_init();
   device_gpio_init();
   timeout_ticks = sl_sleeptimer_ms_to_tick(timeout);
+  sl_sleeptimer_start_periodic_timer(&led_timer, timeout_ticks, device_led_toggle_callback, NULL, 0, 0);
   /////////////////////////////////////////////////////////////////////////////
   // Put your additional application init code here!                         //
   // This is called once during start-up.                                    //
@@ -116,17 +120,34 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                                                sl_bt_legacy_advertiser_connectable);
       app_log("Start advertising\n");
       app_assert_status(sc);
+      if (current_connections < MAX_CONNECTION) {
+        // Tiếp tục quảng bá nếu chưa đạt số kết nối tối đa
+        sl_bt_legacy_advertiser_start(advertising_set_handle,
+                                      sl_bt_legacy_advertiser_connectable);
+      } else {
+        // Dừng quảng bá nếu đã đạt số kết nối tối đa
+        sl_bt_advertiser_stop(advertising_set_handle);
+      }
+
       break;
 
     // -------------------------------
     // This event indicates that a new connection was opened.
     case sl_bt_evt_connection_opened_id:
       app_log("New device connected.\n");
-      sl_sleeptimer_start_periodic_timer(&led_timer, timeout_ticks, device_led_toggle_callback, NULL, 0, 0);
+      current_connections++;
 
       address = evt->data.evt_connection_opened.address;
       address_type = evt->data.evt_connection_opened.address_type;
       handle = evt->data.evt_connection_opened.connection;
+      if (current_connections < MAX_CONNECTION) {
+        // Tiếp tục quảng bá nếu chưa đạt số kết nối tối đa
+        sl_bt_legacy_advertiser_start(advertising_set_handle,
+                                      sl_bt_legacy_advertiser_connectable);
+      } else {
+        // Dừng quảng bá nếu đã đạt số kết nối tối đa
+        sl_bt_advertiser_stop(advertising_set_handle);
+      }
 
       app_log("New connection: %d\n", handle);
       break;
@@ -135,6 +156,8 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
     // This event indicates that a connection was closed.
     case sl_bt_evt_connection_closed_id:
       uint8_t connection = evt->data.evt_connection_closed.connection;
+      current_connections--;
+
       // Generate data for advertising
       app_log( "Device has connection %d disconnected\n", connection);
 
