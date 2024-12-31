@@ -65,6 +65,7 @@ void sl_update_advertising_data();
 void sl_start_advertising();
 void sl_recieved_data(uint8_t connection, uint16_t characteristic, uint8array *received_value);
 void sl_read_data(uint8_t connection);
+void sl_controll_led(uint8_t data_recv[], size_t data_recv_len);
 /**************************************************************************//**
  * Application Init.
  *****************************************************************************/
@@ -278,6 +279,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
             sprintf(output, "Saved characteristic with UUID 0x%04x at index %d\n", uuid16, index);
             app_log(output);
             state = discover_characteristics;
+            app_log("discover_characteristics\n");
             break;
         }
       }
@@ -288,8 +290,12 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       uint16_t characteristic = evt->data.evt_gatt_characteristic_value.characteristic;
       uint8_t connection = evt->data.evt_gatt_characteristic_value.connection;
       uint8array *received_value = &evt->data.evt_gatt_characteristic_value.value;
-//      sl_recieved_data(connection, characteristic, received_value);
-      sl_update_advertising_data();
+      uint16_t att_opcode = evt->data.evt_gatt_characteristic_value.att_opcode;
+      app_log("att_opcode = %d\n", att_opcode);
+      if (att_opcode == sl_bt_gatt_handle_value_notification) {
+          sl_recieved_data(connection, characteristic, received_value);
+      }
+//      sl_update_advertising_data();
 
       break;
     }
@@ -308,44 +314,12 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
       (void)data_recv_len;
       app_log_status_error(sc);
+      sl_controll_led(data_recv, data_recv_len);
 
       if (sc != SL_STATUS_OK) {
         break;
       }
-      if (data_recv_len == 6 && memcmp(data_recv, "led on", 6) == 0) {
-         app_log("led on\n");
-         for (uint8_t i = 0; i < live_connections; i++) {
-           sc = sl_bt_gatt_write_characteristic_value(conn[i].handle,
-                                                      characteristic_handle[0],
-                                                      data_recv_len,
-                                                      data_recv);
-           app_assert_status(sc);
-         }
-      }
-      else if (data_recv_len == 7 && memcmp(data_recv, "led off", 7) == 0) {
 
-        app_log("led off\n");
-        for (uint8_t i = 0; i < live_connections; i++) {
-         sc = sl_bt_gatt_write_characteristic_value(conn[i].handle,
-                                                    characteristic_handle[0],
-                                                    data_recv_len,
-                                                    data_recv);
-         app_assert_status(sc);
-       }
-      }
-      else if (data_recv_len == 10 && memcmp(data_recv, "led toggle", 10) == 0) {
-        app_log("led toggle\n");
-        for (uint8_t i = 0; i < live_connections; i++) {
-           sc = sl_bt_gatt_write_characteristic_value(conn[i].handle,
-                                                      characteristic_handle[0],
-                                                      data_recv_len,
-                                                      data_recv);
-           app_assert_status(sc);
-         }
-      }
-      else {
-        app_log("Invalid attribute value\n");
-      }
       break;
 
     // -------------------------------
@@ -357,21 +331,59 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       if (state == discover_services) {
         if (connection == conn[0].handle) {
           sc = sl_bt_gatt_discover_characteristics(conn[0].handle, service_handle);
+          app_log("Discover char 1\n");
           app_assert_status(sc);
         }
         if (connection == conn[1].handle) {
           sc = sl_bt_gatt_discover_characteristics(conn[1].handle, service_handle);
+          app_log("Discover char 2\n");
+
           app_assert_status(sc);
         }
         if (connection == conn[2].handle) {
           sc = sl_bt_gatt_discover_characteristics(conn[2].handle, service_handle);
+          app_log("Discover char 3\n");
+
           app_assert_status(sc);
         }
       }
-
       if (state == discover_characteristics) {
+
+
 //        sl_read_data(connection);
+        if (connection == conn[0].handle) {
+          sc = sl_bt_gatt_set_characteristic_notification(conn[0].handle,
+                                                          characteristic_handle[0],
+                                                          sl_bt_gatt_notification);
+          app_log("Set Notify 1\n");
+          app_assert_status(sc);
+        }
+
+        if (connection == conn[1].handle) {
+          sc = sl_bt_gatt_set_characteristic_notification(conn[1].handle,
+                                                          characteristic_handle[0],
+                                                          sl_bt_gatt_notification);
+          app_log("Set Notify 2\n");
+
+          app_assert_status(sc);
+        }
+        if (connection == conn[2].handle) {
+          sc = sl_bt_gatt_set_characteristic_notification(conn[2].handle,
+                                                          characteristic_handle[0],
+                                                          sl_bt_gatt_notification);
+          app_log("Set Notify 3\n");
+
+          app_assert_status(sc);
+        }
+
+
+        state = notification;
+
       }
+      if (state == notification) {
+          break;
+      }
+
       break;
     }
     // -------------------------------
@@ -511,12 +523,17 @@ void sl_start_advertising() {
 void sl_read_data(uint8_t connection) {
   if (connection == conn[0].handle) {
     sc = sl_bt_gatt_read_characteristic_value(conn[0].handle,characteristic_handle[0]);
+    app_log("read1\n");
   }
   else if (connection == conn[1].handle) {
     sc = sl_bt_gatt_read_characteristic_value(conn[1].handle,characteristic_handle[0]);
+    app_log("read2\n");
+
   }
   else if (connection == conn[2].handle) {
     sc = sl_bt_gatt_read_characteristic_value(conn[2].handle,characteristic_handle[0]);
+    app_log("read3\n");
+
   }
 
 }
@@ -533,5 +550,78 @@ void sl_recieved_data(uint8_t connection, uint16_t characteristic, uint8array *r
       led_state_3 = received_value->data[0];
   } else {
       app_log("Received unknown characteristic value\n");
+  }
+}
+
+void sl_controll_led(uint8_t data_recv[], size_t data_recv_len)
+{
+  if (data_recv_len == 8 && memcmp(data_recv, "led 1 on", 8) == 0) {
+     app_log("led 1 on\n");
+     sc = sl_bt_gatt_write_characteristic_value(conn[0].handle,
+                                                characteristic_handle[0],
+                                                data_recv_len,
+                                                data_recv);
+     app_assert_status(sc);
+  } else if (data_recv_len == 8 && memcmp(data_recv, "led 2 on", 8) == 0) {
+    app_log("led 2 on\n");
+    sc = sl_bt_gatt_write_characteristic_value(conn[1].handle,
+                                               characteristic_handle[0],
+                                               data_recv_len,
+                                               data_recv);
+    app_assert_status(sc);
+  } else if (data_recv_len == 8 && memcmp(data_recv, "led 3 on", 8) == 0) {
+    app_log("led 3 on\n");
+    sc = sl_bt_gatt_write_characteristic_value(conn[2].handle,
+                                               characteristic_handle[0],
+                                               data_recv_len,
+                                               data_recv);
+    app_assert_status(sc);
+  } else if (data_recv_len == 9 && memcmp(data_recv, "led 1 off", 9) == 0) {
+
+    app_log("led 1 off\n");
+    sc = sl_bt_gatt_write_characteristic_value(conn[0].handle,
+                                               characteristic_handle[0],
+                                               data_recv_len,
+                                               data_recv);
+    app_assert_status(sc);
+  } else if (data_recv_len == 9 && memcmp(data_recv, "led 2 off", 9) == 0) {
+
+    app_log("led 2 off\n");
+    sc = sl_bt_gatt_write_characteristic_value(conn[1].handle,
+                                               characteristic_handle[0],
+                                               data_recv_len,
+                                               data_recv);
+    app_assert_status(sc);
+  } else if (data_recv_len == 9 && memcmp(data_recv, "led 3 off", 9) == 0) {
+
+    app_log("led 3 off\n");
+    sc = sl_bt_gatt_write_characteristic_value(conn[2].handle,
+                                               characteristic_handle[0],
+                                               data_recv_len,
+                                               data_recv);
+    app_assert_status(sc);
+  } else if (data_recv_len == 12 && memcmp(data_recv, "led 1 toggle", 12) == 0) {
+    app_log("led 1 toggle\n");
+    sc = sl_bt_gatt_write_characteristic_value(conn[0].handle,
+                                               characteristic_handle[0],
+                                               data_recv_len,
+                                               data_recv);
+    app_assert_status(sc);
+  } else if (data_recv_len == 12 && memcmp(data_recv, "led 2 toggle", 12) == 0) {
+    app_log("led 2 toggle\n");
+    sc = sl_bt_gatt_write_characteristic_value(conn[1].handle,
+                                               characteristic_handle[0],
+                                               data_recv_len,
+                                               data_recv);
+    app_assert_status(sc);
+  } else if (data_recv_len == 12 && memcmp(data_recv, "led 3 toggle", 12) == 0) {
+    app_log("led 3 toggle\n");
+    sc = sl_bt_gatt_write_characteristic_value(conn[2].handle,
+                                               characteristic_handle[0],
+                                               data_recv_len,
+                                               data_recv);
+    app_assert_status(sc);
+  } else {
+    app_log("Invalid attribute value\n");
   }
 }

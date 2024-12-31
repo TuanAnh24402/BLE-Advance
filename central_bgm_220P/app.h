@@ -59,13 +59,14 @@
 #define MAX_CONNECTION                3
 
 
+
 typedef enum {
   scanning,
-  advertising,
   connecting,
   opening,
   discover_services,
   discover_characteristics,
+  notification,
   running
 }conn_state_t;
 

@@ -8,6 +8,9 @@
 #include "em_gpio.h"
 #include "em_cmu.h"
 #include "sl_sleeptimer.h"
+#include "app_log.h"
+#include <stdio.h>
+#include <string.h>
 
 #ifndef DEVICE_H_
 #define DEVICE_H_
@@ -23,4 +26,6 @@ void device_turn_off_led(void);
 void device_toggle_led(void);
 
 void device_led_toggle_callback(sl_sleeptimer_timer_handle_t *handle, void *data);
+void device_controll_led(uint8_t data_recv[], size_t data_recv_len);
+
 #endif /* DEVICE_H_ */

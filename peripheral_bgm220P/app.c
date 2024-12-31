@@ -33,8 +33,7 @@
 #include "app.h"
 #include "device.h"
 #include "gatt_db.h"
-#include <stdio.h>
-#include <string.h>
+
 
 #define MAX_CONNECTION              1
 // The advertising set handle allocated from Bluetooth stack.
@@ -121,11 +120,9 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       app_log("Start advertising\n");
       app_assert_status(sc);
       if (current_connections < MAX_CONNECTION) {
-        // Tiếp tục quảng bá nếu chưa đạt số kết nối tối đa
         sl_bt_legacy_advertiser_start(advertising_set_handle,
                                       sl_bt_legacy_advertiser_connectable);
       } else {
-        // Dừng quảng bá nếu đã đạt số kết nối tối đa
         sl_bt_advertiser_stop(advertising_set_handle);
       }
 
@@ -141,11 +138,9 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       address_type = evt->data.evt_connection_opened.address_type;
       handle = evt->data.evt_connection_opened.connection;
       if (current_connections < MAX_CONNECTION) {
-        // Tiếp tục quảng bá nếu chưa đạt số kết nối tối đa
         sl_bt_legacy_advertiser_start(advertising_set_handle,
                                       sl_bt_legacy_advertiser_connectable);
       } else {
-        // Dừng quảng bá nếu đã đạt số kết nối tối đa
         sl_bt_advertiser_stop(advertising_set_handle);
       }
 
@@ -154,7 +149,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
     // -------------------------------
     // This event indicates that a connection was closed.
-    case sl_bt_evt_connection_closed_id:
+    case sl_bt_evt_connection_closed_id: {
       uint8_t connection = evt->data.evt_connection_closed.connection;
       current_connections--;
 
@@ -174,9 +169,11 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
       app_assert_status(sc);
       break;
+    }
 
-    case sl_bt_evt_gatt_server_attribute_value_id:
+    case sl_bt_evt_gatt_server_attribute_value_id: {
       uint16_t attribute = evt->data.evt_gatt_server_attribute_value.attribute;
+      uint8_t connection = evt->data.evt_gatt_server_attribute_value.connection;
       uint8_t data_recv[50];
       size_t data_recv_len;
 
@@ -195,24 +192,14 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
         break;
       }
 
-      if (data_recv_len == 6 && memcmp(data_recv, "led on", 6) == 0) {
-        app_log("Led ON\n");
-        led_blinking = false;
-        device_turn_on_led();
-      }
-      else if (data_recv_len == 7 && memcmp(data_recv, "led off", 7) == 0) {
-        app_log("Led OFF\n");
-        led_blinking = false;
-        device_turn_off_led();
-      }
-      else if (data_recv_len == 10 && memcmp(data_recv, "led toggle", 10) == 0) {
-        led_blinking = !led_blinking;
-        app_log("Led toggle\n");
-      }
-      else {
-        app_log("Invalid attribute value\n");
-      }
+      device_controll_led(data_recv,data_recv_len);
+//      sc = sl_bt_gatt_server_send_notification(handle, gattdb_led_control, data_recv_len, data_recv);
+      sc = sl_bt_gatt_server_notify_all(gattdb_led_control, data_recv_len, data_recv);
+      app_assert_status(sc);
+
       break;
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////
     // Add additional event handlers here as your application requires!      //

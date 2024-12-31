@@ -1,6 +1,6 @@
-device.o: ../device.c \
+gpio.o: ../gpio.c \
  d:\geko_new\gecko-sdk\platform\common\toolchain\inc\sl_gcc_preinclude.h \
- ../device.h d:\geko_new\gecko-sdk\platform\emlib\inc\em_gpio.h \
+ ../gpio.h d:\geko_new\gecko-sdk\platform\emlib\inc\em_gpio.h \
  d:\geko_new\gecko-sdk\platform\device\siliconlabs\bgm22\include\em_device.h \
  d:\geko_new\gecko-sdk\platform\device\siliconlabs\bgm22\include\bgm220pc22hna.h \
  d:\geko_new\gecko-sdk\platform\cmsis\core\include\core_cm33.h \
@@ -46,39 +46,32 @@ device.o: ../device.c \
  d:\geko_new\gecko-sdk\platform\device\siliconlabs\bgm22\include\bgm22_prs_signals.h \
  d:\geko_new\gecko-sdk\platform\device\siliconlabs\bgm22\include\bgm22_dma_descriptor.h \
  d:\geko_new\gecko-sdk\platform\device\siliconlabs\bgm22\include\bgm22_ldmaxbar_defines.h \
- D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/sl_component_catalog.h \
+ D:\Code\OJT_code\BLE-Advance\central_bgm_220P\autogen/sl_component_catalog.h \
  d:\geko_new\gecko-sdk\platform\common\inc\sl_assert.h \
  d:\geko_new\gecko-sdk\platform\emlib\inc\em_bus.h \
  d:\geko_new\gecko-sdk\platform\emlib\inc\em_core.h \
  d:\geko_new\gecko-sdk\platform\emlib\inc\em_core_generic.h \
  d:\geko_new\gecko-sdk\platform\common\inc\sl_common.h \
  d:\geko_new\gecko-sdk\platform\common\inc\sl_assert.h \
- D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\config/emlib_core_debug_config.h \
+ D:\Code\OJT_code\BLE-Advance\central_bgm_220P\config/emlib_core_debug_config.h \
  d:\geko_new\gecko-sdk\platform\common\inc\sl_enum.h \
- d:\geko_new\gecko-sdk\platform\emlib\inc\em_cmu.h \
- d:\geko_new\gecko-sdk\platform\emlib\inc\em_cmu_compat.h \
- d:\geko_new\gecko-sdk\platform\emlib\inc\em_gpio.h \
- d:\geko_new\gecko-sdk\platform\common\inc\sl_status.h \
- d:\geko_new\gecko-sdk\platform\emlib\inc\sli_em_cmu.h \
- d:\geko_new\gecko-sdk\platform\service\sleeptimer\inc\sl_sleeptimer.h \
- d:\geko_new\gecko-sdk\app\common\util\app_log\app_log.h \
- d:\geko_new\gecko-sdk\platform\service\iostream\inc\sl_iostream.h \
- D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/sl_iostream_handles.h \
- D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/sl_iostream_init_usart_instances.h \
- D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/sl_component_catalog.h \
+ D:\Code\OJT_code\BLE-Advance\central_bgm_220P\autogen/sl_bluetooth.h \
  d:\geko_new\gecko-sdk\platform\service\power_manager\inc\sl_power_manager.h \
- D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\config/sl_power_manager_config.h \
+ D:\Code\OJT_code\BLE-Advance\central_bgm_220P\config/sl_power_manager_config.h \
  d:\geko_new\gecko-sdk\platform\common\inc\sl_slist.h \
+ d:\geko_new\gecko-sdk\platform\common\inc\sl_status.h \
+ d:\geko_new\gecko-sdk\platform\service\sleeptimer\inc\sl_sleeptimer.h \
  d:\geko_new\gecko-sdk\platform\emlib\inc\em_core_generic.h \
- d:\geko_new\gecko-sdk\platform\service\iostream\inc\sl_iostream_uart.h \
- d:\geko_new\gecko-sdk\platform\service\iostream\inc\sl_iostream.h \
- d:\geko_new\gecko-sdk\platform\emdrv\dmadrv\inc\dmadrv.h \
- d:\geko_new\gecko-sdk\platform\emdrv\common\inc\ecode.h \
- d:\geko_new\gecko-sdk\platform\emlib\inc\em_ldma.h \
- D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\config/dmadrv_config.h \
- D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\config/app_log_config.h
+ D:\Code\OJT_code\BLE-Advance\central_bgm_220P\config/sl_bluetooth_config.h \
+ D:\Code\OJT_code\BLE-Advance\central_bgm_220P\config/sl_bluetooth_connection_config.h \
+ D:\Code\OJT_code\BLE-Advance\central_bgm_220P\config/sl_bluetooth_advertiser_config.h \
+ d:\geko_new\gecko-sdk\protocol\bluetooth\inc\sl_bt_stack_config.h \
+ d:\geko_new\gecko-sdk\protocol\bluetooth\inc\sl_bt_ll_config.h \
+ d:\geko_new\gecko-sdk\protocol\bluetooth\inc\sl_bt_api.h \
+ d:\geko_new\gecko-sdk\protocol\bluetooth\inc\sl_bgapi.h \
+ d:\geko_new\gecko-sdk\protocol\bluetooth\inc\sl_bt_api_compatibility.h
 d:\geko_new\gecko-sdk\platform\common\toolchain\inc\sl_gcc_preinclude.h:
-../device.h:
+../gpio.h:
 d:\geko_new\gecko-sdk\platform\emlib\inc\em_gpio.h:
 d:\geko_new\gecko-sdk\platform\device\siliconlabs\bgm22\include\em_device.h:
 d:\geko_new\gecko-sdk\platform\device\siliconlabs\bgm22\include\bgm220pc22hna.h:
@@ -125,34 +118,27 @@ d:\geko_new\gecko-sdk\platform\device\siliconlabs\bgm22\include\bgm22_devinfo.h:
 d:\geko_new\gecko-sdk\platform\device\siliconlabs\bgm22\include\bgm22_prs_signals.h:
 d:\geko_new\gecko-sdk\platform\device\siliconlabs\bgm22\include\bgm22_dma_descriptor.h:
 d:\geko_new\gecko-sdk\platform\device\siliconlabs\bgm22\include\bgm22_ldmaxbar_defines.h:
-D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/sl_component_catalog.h:
+D:\Code\OJT_code\BLE-Advance\central_bgm_220P\autogen/sl_component_catalog.h:
 d:\geko_new\gecko-sdk\platform\common\inc\sl_assert.h:
 d:\geko_new\gecko-sdk\platform\emlib\inc\em_bus.h:
 d:\geko_new\gecko-sdk\platform\emlib\inc\em_core.h:
 d:\geko_new\gecko-sdk\platform\emlib\inc\em_core_generic.h:
 d:\geko_new\gecko-sdk\platform\common\inc\sl_common.h:
 d:\geko_new\gecko-sdk\platform\common\inc\sl_assert.h:
-D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\config/emlib_core_debug_config.h:
+D:\Code\OJT_code\BLE-Advance\central_bgm_220P\config/emlib_core_debug_config.h:
 d:\geko_new\gecko-sdk\platform\common\inc\sl_enum.h:
-d:\geko_new\gecko-sdk\platform\emlib\inc\em_cmu.h:
-d:\geko_new\gecko-sdk\platform\emlib\inc\em_cmu_compat.h:
-d:\geko_new\gecko-sdk\platform\emlib\inc\em_gpio.h:
-d:\geko_new\gecko-sdk\platform\common\inc\sl_status.h:
-d:\geko_new\gecko-sdk\platform\emlib\inc\sli_em_cmu.h:
-d:\geko_new\gecko-sdk\platform\service\sleeptimer\inc\sl_sleeptimer.h:
-d:\geko_new\gecko-sdk\app\common\util\app_log\app_log.h:
-d:\geko_new\gecko-sdk\platform\service\iostream\inc\sl_iostream.h:
-D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/sl_iostream_handles.h:
-D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/sl_iostream_init_usart_instances.h:
-D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/sl_component_catalog.h:
+D:\Code\OJT_code\BLE-Advance\central_bgm_220P\autogen/sl_bluetooth.h:
 d:\geko_new\gecko-sdk\platform\service\power_manager\inc\sl_power_manager.h:
-D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\config/sl_power_manager_config.h:
+D:\Code\OJT_code\BLE-Advance\central_bgm_220P\config/sl_power_manager_config.h:
 d:\geko_new\gecko-sdk\platform\common\inc\sl_slist.h:
+d:\geko_new\gecko-sdk\platform\common\inc\sl_status.h:
+d:\geko_new\gecko-sdk\platform\service\sleeptimer\inc\sl_sleeptimer.h:
 d:\geko_new\gecko-sdk\platform\emlib\inc\em_core_generic.h:
-d:\geko_new\gecko-sdk\platform\service\iostream\inc\sl_iostream_uart.h:
-d:\geko_new\gecko-sdk\platform\service\iostream\inc\sl_iostream.h:
-d:\geko_new\gecko-sdk\platform\emdrv\dmadrv\inc\dmadrv.h:
-d:\geko_new\gecko-sdk\platform\emdrv\common\inc\ecode.h:
-d:\geko_new\gecko-sdk\platform\emlib\inc\em_ldma.h:
-D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\config/dmadrv_config.h:
-D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\config/app_log_config.h:
+D:\Code\OJT_code\BLE-Advance\central_bgm_220P\config/sl_bluetooth_config.h:
+D:\Code\OJT_code\BLE-Advance\central_bgm_220P\config/sl_bluetooth_connection_config.h:
+D:\Code\OJT_code\BLE-Advance\central_bgm_220P\config/sl_bluetooth_advertiser_config.h:
+d:\geko_new\gecko-sdk\protocol\bluetooth\inc\sl_bt_stack_config.h:
+d:\geko_new\gecko-sdk\protocol\bluetooth\inc\sl_bt_ll_config.h:
+d:\geko_new\gecko-sdk\protocol\bluetooth\inc\sl_bt_api.h:
+d:\geko_new\gecko-sdk\protocol\bluetooth\inc\sl_bgapi.h:
+d:\geko_new\gecko-sdk\protocol\bluetooth\inc\sl_bt_api_compatibility.h:
