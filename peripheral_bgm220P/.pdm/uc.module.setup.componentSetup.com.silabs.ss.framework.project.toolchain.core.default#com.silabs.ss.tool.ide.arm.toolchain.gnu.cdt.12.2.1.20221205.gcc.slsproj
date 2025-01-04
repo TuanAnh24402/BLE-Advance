@@ -181,6 +181,7 @@
               <file name="mbedtls_cmac.c" uri="studio:/sdk/platform/security/sl_component/sl_mbedtls_support/src/mbedtls_cmac.c"/>
               <file name="mbedtls_ecdsa_ecdh.c" uri="studio:/sdk/platform/security/sl_component/sl_mbedtls_support/src/mbedtls_ecdsa_ecdh.c"/>
               <file name="cryptoacc_gcm.c" uri="studio:/sdk/platform/security/sl_component/sl_mbedtls_support/src/cryptoacc_gcm.c"/>
+              <file name="mbedtls_sha.c" uri="studio:/sdk/platform/security/sl_component/sl_mbedtls_support/src/mbedtls_sha.c"/>
               <file name="sl_psa_crypto.c" uri="studio:/sdk/platform/security/sl_component/sl_mbedtls_support/src/sl_psa_crypto.c"/>
               <file name="sli_psa_crypto.c" uri="studio:/sdk/platform/security/sl_component/sl_mbedtls_support/src/sli_psa_crypto.c"/>
             </folder>
@@ -642,6 +643,8 @@
       <folder name="third_party">
         <folder name="mbedtls">
           <folder name="library">
+            <file name="md.c" uri="studio:/sdk/util/third_party/mbedtls/library/md.c"/>
+            <file name="sha256.c" uri="studio:/sdk/util/third_party/mbedtls/library/sha256.c"/>
             <file name="constant_time.c" uri="studio:/sdk/util/third_party/mbedtls/library/constant_time.c"/>
             <file name="threading.c" uri="studio:/sdk/util/third_party/mbedtls/library/threading.c"/>
             <file name="platform.c" uri="studio:/sdk/util/third_party/mbedtls/library/platform.c"/>

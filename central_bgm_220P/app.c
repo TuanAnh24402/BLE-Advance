@@ -31,18 +31,18 @@
 #include "app_assert.h"
 #include "sl_bluetooth.h"
 #include "app.h"
+#include "mbedtls/md.h"
 #include <stdio.h>
 #include <string.h>
+#include "gatt_db.h"
 
 
 // The advertising set handle allocated from Bluetooth stack.
 // Handle for the advertising set
 static uint8_t advertising_set_handle = 0xff;
-
-// Variable characteristic
-static uint8_t led_state_1 = 0, fan_state_1 = 0;
-static uint8_t led_state_2 = 0;
-static uint8_t led_state_3 = 0;
+bd_addr address;                           // Bluetooth device address
+uint8_t address_type;                      // Address type
+uint8_t handle;                            // Connection handle
 
 
 static conn_state_t state;
@@ -57,6 +57,11 @@ static const uint8_t service_uuid[2] = {0xFF, 0x00};
 static uint32_t service_handle = 0;
 static uint16_t characteristic_handle[2];
 bool check_characteristic = true;
+
+static uint8_t led_state_1 = 0;
+static uint8_t led_state_2 = 0;
+static uint8_t led_state_3 = 0;
+
 
 static void print_bluetooth_address(void);
 static bd_addr *read_and_cache_bluetooth_address(uint8_t *address_type_out);
@@ -75,7 +80,7 @@ SL_WEAK void app_init(void)
   // Put your additional application init code here!                         //
   // This is called once during start-up.                                    //
   /////////////////////////////////////////////////////////////////////////////
-}
+ }
 
 /**************************************************************************//**
  * Application Process Action.
@@ -97,11 +102,15 @@ SL_WEAK void app_process_action(void)
  *****************************************************************************/
 void sl_bt_on_event(sl_bt_msg_t *evt)
 {
+  uint32_t passkey_central = 0;
+  uint8_t system_id[8];
+
   switch (SL_BT_MSG_ID(evt->header)) {
     // -------------------------------
     // This event indicates the device has started and the radio is ready.
     // Do not call any stack command before receiving this boot event!
-    case sl_bt_evt_system_boot_id:
+    case sl_bt_evt_system_boot_id: {
+
       char output[100];
       sprintf(output, "Bluetooth stack booted: v%d.%d.%d-b%d\n",
               evt->data.evt_system_boot.major,
@@ -110,7 +119,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
               evt->data.evt_system_boot.build);
       app_log(output);
       print_bluetooth_address();
-      uint16_t scan_interval = 320;
+      uint16_t scan_interval = 160;
       uint16_t scan_window = 160;
 
       // Set scan parameters
@@ -132,9 +141,30 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                                 sl_bt_scanner_discover_generic);
       app_assert_status(sc);
       state = scanning;
+
+      passkey_central = 123456;
+      sc = sl_bt_sm_configure(0x00, sl_bt_sm_io_capability_displayonly);
+      app_assert(sc == SL_STATUS_OK,
+                 "[E: 0x%04x] Failed to configure security\n",
+                 (int)sc);
+
+      sc = sl_bt_sm_set_passkey(passkey_central);
+      app_assert(sc == SL_STATUS_OK,
+                   "[E: 0x%04x] Failed to set passkey\n",
+                   (int)sc);
+
+      sc = sl_bt_sm_set_bondable_mode(1);
+      app_assert(sc == SL_STATUS_OK,
+                 "[E: 0x%04x] Failed to set bondalbe mode \n",
+                 (int)sc);
+
+
+
+
       sl_start_advertising();
 
       break;
+    }
 
     case sl_bt_evt_scanner_legacy_advertisement_report_id:
       uint8_t *adv_data = evt->data.evt_scanner_legacy_advertisement_report.data.data;
@@ -176,9 +206,9 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                                   &conn[2].handle);
             break;
           }
-          else {
-            app_log("Not found server\n");
-          }
+//          else {
+//            app_log("Not found server\n");
+//          }
 
         }
         i += length + 1;
@@ -190,51 +220,84 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
     case sl_bt_evt_connection_opened_id:
       uint8_t current_connection = evt->data.evt_connection_opened.connection;
 
+
       if (current_connection == conn[0].handle) {
         app_log("Connected to server 1\n");
         live_connections++;
+        sc = sl_bt_gatt_discover_primary_services_by_uuid(conn[0].handle,
+                                                          sizeof(service_uuid),
+                                                          (const uint8_t*) service_uuid);
+        if (sc == SL_STATUS_INVALID_HANDLE) {
+          // Failed to open connection, res-tart scanning
+          app_log_warning("Primary service discovery failed with invalid handle, dropping client\n");
+          sc = sl_bt_scanner_start(sl_bt_gap_phy_1m, sl_bt_scanner_discover_generic);
+          app_assert_status(sc);
+          state = scanning;
+          break;
+        }
+        else {
+          app_assert_status(sc);
+        }
+//        state = discover_services;
+
       } else if (current_connection == conn[1].handle) {
         app_log("Connected to server 2\n");
         live_connections++;
-      }
-      else if (current_connection == conn[2].handle) {
-        app_log("Connected to server 3\n");
-        live_connections++;
-      } else {
-        app_log("Smartphone connected\n");
-        sl_bt_advertiser_stop(advertising_set_handle);
-        break;
-      }
-      state = connecting;
-      if (state == connecting) {
-        if (live_connections < MAX_CONNECTION) {
-          app_log("Continue scanning\n");
-          sc = sl_bt_scanner_start(sl_bt_scanner_scan_phy_1m,
-                                   sl_bt_scanner_discover_generic);
+        sc = sl_bt_gatt_discover_primary_services_by_uuid(conn[1].handle,
+                                                          sizeof(service_uuid),
+                                                          (const uint8_t*) service_uuid);
+        if (sc == SL_STATUS_INVALID_HANDLE) {
+          // Failed to open connection, res-tart scanning
+          app_log_warning("Primary service discovery failed with invalid handle, dropping client\n");
+          sc = sl_bt_scanner_start(sl_bt_gap_phy_1m, sl_bt_scanner_discover_generic);
           app_assert_status(sc);
           state = scanning;
-        } else {
-          sl_bt_scanner_stop();
-          for (int i = 0; i < live_connections; i++) {
-            sc = sl_bt_gatt_discover_primary_services_by_uuid(conn[i].handle,
-                                                              sizeof(service_uuid),
-                                                              (const uint8_t*) service_uuid);
-            if (sc == SL_STATUS_INVALID_HANDLE) {
-              // Failed to open connection, res-tart scanning
-              app_log_warning("Primary service discovery failed with invalid handle, dropping client\n");
-              sc = sl_bt_scanner_start(sl_bt_gap_phy_1m, sl_bt_scanner_discover_generic);
-              app_assert_status(sc);
-              state = scanning;
-              break;
-            }
-            else {
-              app_assert_status(sc);
-            }
-          }
-          state = discover_services;
+          break;
         }
+        else {
+          app_assert_status(sc);
+        }
+//        state = discover_services;
+
+      } else if (current_connection == conn[2].handle) {
+        app_log("Connected to server 3\n");
+        live_connections++;
+        sc = sl_bt_gatt_discover_primary_services_by_uuid(conn[2].handle,
+                                                          sizeof(service_uuid),
+                                                          (const uint8_t*) service_uuid);
+        if (sc == SL_STATUS_INVALID_HANDLE) {
+          // Failed to open connection, res-tart scanning
+          app_log_warning("Primary service discovery failed with invalid handle, dropping client\n");
+          sc = sl_bt_scanner_start(sl_bt_gap_phy_1m, sl_bt_scanner_discover_generic);
+          app_assert_status(sc);
+          state = scanning;
+          break;
+        }
+        else {
+          app_assert_status(sc);
+        }
+
+      } else {
+        sc = sl_bt_sm_increase_security(current_connection);
+        app_assert(sc == SL_STATUS_OK,
+                  "[E: 0x%04x] Failed to increasing security\n",
+                  (int)sc);
+        app_log("Smartphone connected\n");
+        sl_bt_advertiser_stop(advertising_set_handle);
+
+        break;
       }
 
+      if (live_connections < MAX_CONNECTION) {
+        app_log("Continue scanning\n");
+        sc = sl_bt_scanner_start(sl_bt_scanner_scan_phy_1m,
+                                 sl_bt_scanner_discover_generic);
+        app_assert_status(sc);
+        state = scanning;
+      }
+      else {
+        sl_bt_scanner_stop();
+      }
       break;
     // -------------------------------
     // This event is generated when a new service is discovered
@@ -253,7 +316,8 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
         }
       }
       app_log("\n");
-      app_log("Discovering characteristics...\n");
+      app_log("Discovering characteristics start ...\n");
+      state = discover_services;
 
       break;
 
@@ -279,7 +343,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
             sprintf(output, "Saved characteristic with UUID 0x%04x at index %d\n", uuid16, index);
             app_log(output);
             state = discover_characteristics;
-            app_log("discover_characteristics\n");
+            app_log("discover characteristics finished\n");
             break;
         }
       }
@@ -327,24 +391,30 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
     // write procedure is completed, or service discovery is completed
     case sl_bt_evt_gatt_procedure_completed_id: {
       uint8_t connection = evt->data.evt_gatt_procedure_completed.connection;
-
+      app_log("state = %d\n",state);
       if (state == discover_services) {
         if (connection == conn[0].handle) {
+            app_log("Discover char 1\n");
+
           sc = sl_bt_gatt_discover_characteristics(conn[0].handle, service_handle);
-          app_log("Discover char 1\n");
           app_assert_status(sc);
+
         }
         if (connection == conn[1].handle) {
-          sc = sl_bt_gatt_discover_characteristics(conn[1].handle, service_handle);
           app_log("Discover char 2\n");
 
-          app_assert_status(sc);
-        }
-        if (connection == conn[2].handle) {
-          sc = sl_bt_gatt_discover_characteristics(conn[2].handle, service_handle);
-          app_log("Discover char 3\n");
+          sc = sl_bt_gatt_discover_characteristics(conn[1].handle, service_handle);
 
           app_assert_status(sc);
+
+        }
+        if (connection == conn[2].handle) {
+            app_log("Discover char 3\n");
+
+          sc = sl_bt_gatt_discover_characteristics(conn[2].handle, service_handle);
+
+          app_assert_status(sc);
+
         }
       }
       if (state == discover_characteristics) {
@@ -357,6 +427,8 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                                                           sl_bt_gatt_notification);
           app_log("Set Notify 1\n");
           app_assert_status(sc);
+          state = notification;
+
         }
 
         if (connection == conn[1].handle) {
@@ -366,6 +438,8 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
           app_log("Set Notify 2\n");
 
           app_assert_status(sc);
+          state = notification;
+
         }
         if (connection == conn[2].handle) {
           sc = sl_bt_gatt_set_characteristic_notification(conn[2].handle,
@@ -374,16 +448,100 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
           app_log("Set Notify 3\n");
 
           app_assert_status(sc);
+          state = notification;
+
         }
 
 
-        state = notification;
+//        state = notification;
 
       }
-      if (state == notification) {
-          break;
+//      if (state == notification) {
+//          break;
+//      }
+
+      break;
+    }
+    case sl_bt_evt_sm_confirm_bonding_id:{
+      app_log_info("Bonding confirm\r\n");
+      uint8_t connection = evt->data.evt_sm_confirm_bonding.connection;
+//      sc = sl_bt_sm_bonding_confirm(connection, 1);
+//      app_assert_status(sc);
+      if (connection == conn[0].handle) {
+        sc = sl_bt_sm_bonding_confirm(connection, 1);
+        app_assert_status(sc);
+        app_log_info("Bonding 1 confirm\r\n");
+
+      } else if (connection == conn[1].handle) {
+        sc = sl_bt_sm_bonding_confirm(connection, 1);
+        app_assert_status(sc);
+        app_log_info("Bonding 2 confirm\r\n");
+
+      } else if (connection == conn[2].handle) {
+        sc = sl_bt_sm_bonding_confirm(connection, 1);
+        app_assert_status(sc);
+        app_log_info("Bonding 3 confirm\r\n");
+
+      }
+      break;
+    }
+
+    case sl_bt_evt_sm_passkey_request_id: {
+      app_log("Passkey request\r\n");
+      uint8_t connection = evt->data.evt_sm_passkey_request.connection;
+      uint32_t passkey = 123456;
+
+      if (connection == conn[0].handle) {
+          app_log("Enter paskey 1\n");
+          sl_status_t sc = sl_bt_sm_enter_passkey(connection, passkey);
+          app_assert(sc == SL_STATUS_OK,
+                     "[E: 0x%04x] Failed to enter passkey\n",
+                     (int)sc);
+      } else if (connection == conn[1].handle) {
+          app_log("Enter paskey 2\n");
+        sl_status_t sc = sl_bt_sm_enter_passkey(connection, passkey);
+                  app_assert(sc == SL_STATUS_OK,
+                             "[E: 0x%04x] Failed to enter passkey\n",
+                             (int)sc);
+      } else if (connection == conn[2].handle) {
+          app_log("Enter paskey 3\n");
+        sl_status_t sc = sl_bt_sm_enter_passkey(connection, passkey);
+         app_assert(sc == SL_STATUS_OK,
+                    "[E: 0x%04x] Failed to enter passkey\n",
+                    (int)sc);
       }
 
+      break;
+    }
+    // -------------------------------
+    // This event indicates a request to display the passkey to the user.
+    case sl_bt_evt_sm_passkey_display_id:
+      app_log("passkey: %4ld\r\n", evt->data.evt_sm_passkey_display.passkey);
+      break;
+
+    case sl_bt_evt_sm_bonded_id: {
+      uint8_t connection = evt->data.evt_sm_bonded.connection;
+      if (connection == conn[0].handle) {
+          app_log("Bonding successful 1\r\n");
+      } else if (connection == conn[1].handle) {
+          app_log("Bonding successful 2\r\n");
+      } else if (connection == conn[2].handle){
+          app_log("Bonding successful 3\r\n");
+      }
+//      app_log("Bonding successful\r\n");
+
+      break;
+
+    }
+
+    case sl_bt_evt_sm_bonding_failed_id: {
+      app_log("Bonding failed, reason 0x%2X\r\n",
+              evt->data.evt_sm_bonding_failed.reason);
+
+      sc = sl_bt_connection_close(evt->data.evt_sm_bonding_failed.connection);
+      app_assert(sc == SL_STATUS_OK,
+                 "[E: 0x%04x] Failed to close Bluetooth connection\n",
+                 (int)sc);
       break;
     }
     // -------------------------------
@@ -391,13 +549,10 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
     case sl_bt_evt_connection_closed_id:
       if (evt->data.evt_connection_closed.connection == conn[0].handle) {
         app_log("Connection 1 closed, restarting scan...\n");
-        conn[0].connected_ok = false;
       } else if (evt->data.evt_connection_closed.connection == conn[1].handle) {
         app_log("Connection 2 closed, restarting scan...\n");
-        conn[1].connected_ok = false;
       } else if (evt->data.evt_connection_closed.connection == conn[2].handle) {
         app_log("Connection 3 closed, restarting scan...\n");
-        conn[1].connected_ok = false;
       } else {
         app_log("Smartphone disconnected\n");
         sc = sl_bt_legacy_advertiser_start(advertising_set_handle, sl_bt_legacy_advertiser_connectable);
@@ -625,3 +780,29 @@ void sl_controll_led(uint8_t data_recv[], size_t data_recv_len)
     app_log("Invalid attribute value\n");
   }
 }
+
+
+#ifdef USE_RANDOM_PUBLIC_ADDRESS
+static void set_random_public_address(void)
+{
+  sl_status_t sc;
+  bd_addr address;
+  size_t data_len;
+  uint8_t data[16];
+
+  sc = sl_bt_system_get_random_data(6, sizeof(data), &data_len, data);
+  app_assert(sc == SL_STATUS_OK,
+                "[E: 0x%04x] Failed to get random data\n",
+                (int)sc);
+
+  memcpy(address.addr, data, sizeof(bd_addr));
+  /* set uppermost 2 bits to make this a random static address */
+  address.addr[5] |= 0xC0;
+
+  sc = sl_bt_system_set_identity_address(address, sl_bt_gap_static_address);
+  app_assert(sc == SL_STATUS_OK,
+                "[E: 0x%04x] Failed to set identity address\n",
+                (int)sc);
+}
+#endif
+

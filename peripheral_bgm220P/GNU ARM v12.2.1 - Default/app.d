@@ -90,7 +90,32 @@ app.o: ../app.c \
  d:\geko_new\gecko-sdk\platform\emlib\inc\em_gpio.h \
  d:\geko_new\gecko-sdk\platform\emlib\inc\sli_em_cmu.h \
  D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/gatt_db.h \
- d:\geko_new\gecko-sdk\protocol\bluetooth\inc\sli_bt_gattdb_def.h
+ d:\geko_new\gecko-sdk\protocol\bluetooth\inc\sli_bt_gattdb_def.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\md.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\private_access.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\build_info.h \
+ D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\config/sl_mbedtls_config.h \
+ D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/sli_mbedtls_config_autogen.h \
+ d:\geko_new\gecko-sdk\platform\security\sl_component\sl_mbedtls_support\config\sli_mbedtls_omnipresent.h \
+ d:\geko_new\gecko-sdk\platform\security\sl_component\sl_mbedtls_support\config\sli_mbedtls_acceleration.h \
+ D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\config/sl_mbedtls_device_config.h \
+ D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/sli_mbedtls_config_transform_autogen.h \
+ D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\config/psa_crypto_config.h \
+ D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/sli_psa_config_autogen.h \
+ d:\geko_new\gecko-sdk\platform\security\sl_component\sl_mbedtls_support\config\sli_psa_acceleration.h \
+ D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/sli_psa_builtin_config_autogen.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\config_psa.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_legacy.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_adjust_config_synonyms.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\config_adjust_psa_superset_legacy.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_adjust_config_key_pair_types.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\config_adjust_legacy_from_psa.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_adjust_auto_enabled.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\config_adjust_legacy_crypto.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\config_adjust_x509.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\config_adjust_ssl.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\check_config.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\platform_util.h
 d:\geko_new\gecko-sdk\platform\common\toolchain\inc\sl_gcc_preinclude.h:
 d:\geko_new\gecko-sdk\platform\emlib\inc\em_common.h:
 d:\geko_new\gecko-sdk\platform\device\siliconlabs\bgm22\include\em_device.h:
@@ -185,3 +210,28 @@ d:\geko_new\gecko-sdk\platform\emlib\inc\em_gpio.h:
 d:\geko_new\gecko-sdk\platform\emlib\inc\sli_em_cmu.h:
 D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/gatt_db.h:
 d:\geko_new\gecko-sdk\protocol\bluetooth\inc\sli_bt_gattdb_def.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\md.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\private_access.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\build_info.h:
+D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\config/sl_mbedtls_config.h:
+D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/sli_mbedtls_config_autogen.h:
+d:\geko_new\gecko-sdk\platform\security\sl_component\sl_mbedtls_support\config\sli_mbedtls_omnipresent.h:
+d:\geko_new\gecko-sdk\platform\security\sl_component\sl_mbedtls_support\config\sli_mbedtls_acceleration.h:
+D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\config/sl_mbedtls_device_config.h:
+D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/sli_mbedtls_config_transform_autogen.h:
+D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\config/psa_crypto_config.h:
+D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/sli_psa_config_autogen.h:
+d:\geko_new\gecko-sdk\platform\security\sl_component\sl_mbedtls_support\config\sli_psa_acceleration.h:
+D:\Code\OJT_code\BLE-Advance\peripheral_bgm220P\autogen/sli_psa_builtin_config_autogen.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\config_psa.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_legacy.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_adjust_config_synonyms.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\config_adjust_psa_superset_legacy.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_adjust_config_key_pair_types.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\config_adjust_legacy_from_psa.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_adjust_auto_enabled.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\config_adjust_legacy_crypto.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\config_adjust_x509.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\config_adjust_ssl.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\check_config.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\platform_util.h:

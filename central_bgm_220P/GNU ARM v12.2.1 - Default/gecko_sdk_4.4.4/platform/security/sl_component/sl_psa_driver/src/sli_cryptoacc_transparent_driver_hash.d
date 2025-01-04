@@ -84,7 +84,45 @@ gecko_sdk_4.4.4/platform/security/sl_component/sl_psa_driver/src/sli_cryptoacc_t
  d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_values.h \
  d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_sizes.h \
  d:\geko_new\gecko-sdk\platform\security\sl_component\sl_psa_driver\inc\sli_cryptoacc_transparent_functions.h \
- d:\geko_new\gecko-sdk\platform\security\sl_component\sl_psa_driver\inc\sli_cryptoacc_transparent_types.h
+ d:\geko_new\gecko-sdk\platform\security\sl_component\sl_psa_driver\inc\sli_cryptoacc_transparent_types.h \
+ d:\geko_new\gecko-sdk\platform\security\sl_component\sl_psa_driver\inc\cryptoacc_management.h \
+ d:\geko_new\gecko-sdk\platform\security\sl_component\sl_psa_driver\inc\sli_psa_driver_features.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_sizes.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_struct.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_driver_contexts_primitives.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_builtin_primitives.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\md5.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\ripemd160.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\sha1.h \
+ d:\geko_new\gecko-sdk\platform\security\sl_component\sl_mbedtls_support\inc\sha1_alt.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\sha256.h \
+ d:\geko_new\gecko-sdk\platform\security\sl_component\sl_mbedtls_support\inc\sha256_alt.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\sha512.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\sha3.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\cipher.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\platform_util.h \
+ d:\geko_new\gecko-sdk\platform\security\sl_component\sl_psa_driver\inc\sli_psa_driver_features.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_driver_contexts_composites.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_builtin_composites.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\cmac.h \
+ d:\geko_new\gecko-sdk\platform\security\sl_component\sl_mbedtls_support\inc\cmac_alt.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\gcm.h \
+ d:\geko_new\gecko-sdk\platform\security\sl_component\sl_mbedtls_support\inc\gcm_alt.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\ccm.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\chachapoly.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\poly1305.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\chacha20.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\ecdsa.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\ecp.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\bignum.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\md.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\ecjpake.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_driver_contexts_key_derivation.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_builtin_key_derivation.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_extra.h \
+ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_compat.h \
+ d:\geko_new\gecko-sdk\platform\security\sl_component\sl_cryptoacc_library\include\sx_errors.h
 d:\geko_new\gecko-sdk\platform\common\toolchain\inc\sl_gcc_preinclude.h:
 d:\geko_new\gecko-sdk\platform\device\siliconlabs\bgm22\include\em_device.h:
 d:\geko_new\gecko-sdk\platform\device\siliconlabs\bgm22\include\bgm220pc22hna.h:
@@ -170,3 +208,41 @@ d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_values.h:
 d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_sizes.h:
 d:\geko_new\gecko-sdk\platform\security\sl_component\sl_psa_driver\inc\sli_cryptoacc_transparent_functions.h:
 d:\geko_new\gecko-sdk\platform\security\sl_component\sl_psa_driver\inc\sli_cryptoacc_transparent_types.h:
+d:\geko_new\gecko-sdk\platform\security\sl_component\sl_psa_driver\inc\cryptoacc_management.h:
+d:\geko_new\gecko-sdk\platform\security\sl_component\sl_psa_driver\inc\sli_psa_driver_features.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_sizes.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_struct.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_driver_contexts_primitives.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_builtin_primitives.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\md5.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\ripemd160.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\sha1.h:
+d:\geko_new\gecko-sdk\platform\security\sl_component\sl_mbedtls_support\inc\sha1_alt.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\sha256.h:
+d:\geko_new\gecko-sdk\platform\security\sl_component\sl_mbedtls_support\inc\sha256_alt.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\sha512.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\sha3.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\cipher.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\platform_util.h:
+d:\geko_new\gecko-sdk\platform\security\sl_component\sl_psa_driver\inc\sli_psa_driver_features.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_driver_contexts_composites.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_builtin_composites.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\cmac.h:
+d:\geko_new\gecko-sdk\platform\security\sl_component\sl_mbedtls_support\inc\cmac_alt.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\gcm.h:
+d:\geko_new\gecko-sdk\platform\security\sl_component\sl_mbedtls_support\inc\gcm_alt.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\ccm.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\chachapoly.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\poly1305.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\chacha20.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\ecdsa.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\ecp.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\bignum.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\md.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\mbedtls\ecjpake.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_driver_contexts_key_derivation.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_builtin_key_derivation.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_extra.h:
+d:\geko_new\gecko-sdk\util\third_party\mbedtls\include\psa\crypto_compat.h:
+d:\geko_new\gecko-sdk\platform\security\sl_component\sl_cryptoacc_library\include\sx_errors.h:
