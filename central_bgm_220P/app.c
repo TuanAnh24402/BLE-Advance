@@ -103,8 +103,6 @@ SL_WEAK void app_process_action(void)
 void sl_bt_on_event(sl_bt_msg_t *evt)
 {
   uint32_t passkey_central = 0;
-  uint8_t system_id[8];
-
   switch (SL_BT_MSG_ID(evt->header)) {
     // -------------------------------
     // This event indicates the device has started and the radio is ready.
@@ -158,9 +156,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                  "[E: 0x%04x] Failed to set bondalbe mode \n",
                  (int)sc);
 
-
-
-
       sl_start_advertising();
 
       break;
@@ -206,10 +201,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                                   &conn[2].handle);
             break;
           }
-//          else {
-//            app_log("Not found server\n");
-//          }
-
         }
         i += length + 1;
       }
@@ -238,8 +229,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
         else {
           app_assert_status(sc);
         }
-//        state = discover_services;
-
       } else if (current_connection == conn[1].handle) {
         app_log("Connected to server 2\n");
         live_connections++;
@@ -257,8 +246,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
         else {
           app_assert_status(sc);
         }
-//        state = discover_services;
-
       } else if (current_connection == conn[2].handle) {
         app_log("Connected to server 3\n");
         live_connections++;
@@ -359,8 +346,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       if (att_opcode == sl_bt_gatt_handle_value_notification) {
           sl_recieved_data(connection, characteristic, received_value);
       }
-//      sl_update_advertising_data();
-
       break;
     }
     case sl_bt_evt_gatt_server_attribute_value_id:
@@ -375,7 +360,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                                                     &data_recv_len,
                                                     data_recv);
       }
-
       (void)data_recv_len;
       app_log_status_error(sc);
       sl_controll_led(data_recv, data_recv_len);
@@ -418,9 +402,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
         }
       }
       if (state == discover_characteristics) {
-
-
-//        sl_read_data(connection);
         if (connection == conn[0].handle) {
           sc = sl_bt_gatt_set_characteristic_notification(conn[0].handle,
                                                           characteristic_handle[0],
@@ -430,7 +411,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
           state = notification;
 
         }
-
         if (connection == conn[1].handle) {
           sc = sl_bt_gatt_set_characteristic_notification(conn[1].handle,
                                                           characteristic_handle[0],
@@ -439,7 +419,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
           app_assert_status(sc);
           state = notification;
-
         }
         if (connection == conn[2].handle) {
           sc = sl_bt_gatt_set_characteristic_notification(conn[2].handle,
@@ -451,22 +430,12 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
           state = notification;
 
         }
-
-
-//        state = notification;
-
       }
-//      if (state == notification) {
-//          break;
-//      }
-
       break;
     }
     case sl_bt_evt_sm_confirm_bonding_id:{
       app_log_info("Bonding confirm\r\n");
       uint8_t connection = evt->data.evt_sm_confirm_bonding.connection;
-//      sc = sl_bt_sm_bonding_confirm(connection, 1);
-//      app_assert_status(sc);
       if (connection == conn[0].handle) {
         sc = sl_bt_sm_bonding_confirm(connection, 1);
         app_assert_status(sc);
@@ -528,7 +497,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       } else if (connection == conn[2].handle){
           app_log("Bonding successful 3\r\n");
       }
-//      app_log("Bonding successful\r\n");
 
       break;
 
@@ -632,19 +600,8 @@ void sl_update_advertising_data() {
     uint8_t adv_data[] = {
         0x02, 0x01, 0x06,                      // Flags: 0x06 (General Discoverable Mode, BR/EDR Not Supported)
         0x07, 0x09, 'S','i','l','l','a','b',
-//        0x0D, 0x08, 'L','e','d','1','=','0'+ led_state_1,'F','a','n','1','=','0'+ fan_state_1,
-//        0x0D, 0x08, 'L','e','d','2','=','0'+ led_state_2,'F','a','n','2','=','0'+ fan_state_2,
-//        0x0D, 0x08, 'L','e','d','3','=','0'+ led_state_3,'F','a','n','3','=','0'+ fan_state_3,
-//        0x03, 0xFF, 0x02, 0x04                 // Length and Manufacturer Specific Data Type
-
+        0x03, 0xFF, 0x02, 0x04                 // Length and Manufacturer Specific Data Type
     };
-
-    // Set advertising data
-//    sc = sl_bt_extended_advertiser_set_phy(advertising_set_handle,
-//                                           sl_bt_gap_1m_phy,
-//                                           sl_bt_gap_2m_phy);
-
-//    sc = sl_bt_extended_advertiser_set_data(advertising_set_handle, sizeof(adv_data), adv_data);
     sc = sl_bt_legacy_advertiser_set_data(advertising_set_handle, 0, sizeof(adv_data), adv_data);
     app_assert_status(sc);
 
@@ -657,10 +614,6 @@ void sl_update_advertising_data() {
         0);  // max. num. adv. events
     app_assert_status(sc);
 
-    // Start non-connectable advertising
-//    sc = sl_bt_extended_advertiser_start(advertising_set_handle,
-//                                         sl_bt_extended_advertiser_connectable,
-//                                         0);
     sc = sl_bt_legacy_advertiser_start(advertising_set_handle, sl_bt_legacy_advertiser_connectable);
     app_assert_status(sc);
 }

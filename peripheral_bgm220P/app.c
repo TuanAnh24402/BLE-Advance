@@ -39,8 +39,6 @@
 #ifdef USE_RANDOM_PUBLIC_ADDRESS
 static void set_random_public_address(void);
 #endif
-static uint32_t make_passkey_from_address(bd_addr address);
-
 
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = 0xff;
@@ -51,7 +49,7 @@ uint8_t handle;                            // Connection handle
 
 uint8_t adv_data[] = {
     0x02, 0x01, 0x06,
-    0x08, 0x08, 'S', 'e', 'r', 'v', 'e', 'r', '1',
+    0x08, 0x08, 'S', 'e', 'r', 'v', 'e', 'r', '3',
     0x03, 0x03, 0xFF, 0x00,
 };
 sl_status_t sc;
@@ -96,7 +94,6 @@ SL_WEAK void app_process_action(void)
 void sl_bt_on_event(sl_bt_msg_t *evt)
 {
   uint8_t system_id[8];
-  uint32_t passkey = 0;
   switch (SL_BT_MSG_ID(evt->header)) {
     // -------------------------------
     // This event indicates the device has started and the radio is ready.
@@ -130,19 +127,10 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                        address.addr[1],
                        address.addr[0]);
 
-//      passkey = make_passkey_from_address(address);
-      passkey = 123456;
-
       sc = sl_bt_sm_configure(0, sl_bt_sm_io_capability_displayonly);
       app_assert(sc == SL_STATUS_OK,
                     "[E: 0x%04x] Failed to configure security\n",
                     (int)sc);
-
-//      sc = sl_bt_sm_set_passkey(passkey);
-//      app_assert(sc == SL_STATUS_OK,
-//                    "[E: 0x%04x] Failed to set passkey\n",
-//                    (int)sc);
-
       sc = sl_bt_sm_set_bondable_mode(1);
       app_assert(sc == SL_STATUS_OK,
                     "[E: 0x%04x] Failed to set bondalbe mode \n",
@@ -165,8 +153,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       app_assert(sc == SL_STATUS_OK,
                     "[E: 0x%04x] Failed to write attribute\n",
                     (int)sc);
-
-
 
       // Create an advertising set.
       sc = sl_bt_advertiser_create_set(&advertising_set_handle);
@@ -192,8 +178,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                                                sl_bt_legacy_advertiser_connectable);
       app_log("Start advertising\n");
       app_assert_status(sc);
-
-
       break;
     }
 
@@ -219,11 +203,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
     case sl_bt_evt_connection_closed_id: {
       app_log_info("Connection closed, reason: 0x%2.2x\r\n",
                      evt->data.evt_connection_closed.reason);
-//      sc = sl_bt_sm_delete_bondings();
-//      app_assert_status(sc);
-//      app_log_info("All bonding deleted\r\n");
-
-
       uint8_t connection = evt->data.evt_connection_closed.connection;
 
       // Generate data for advertising
@@ -241,14 +220,11 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       app_log("Start advertising\n");
 
       app_assert_status(sc);
-
-
       break;
     }
 
     case sl_bt_evt_gatt_server_attribute_value_id: {
       uint16_t attribute = evt->data.evt_gatt_server_attribute_value.attribute;
-//      uint8_t connection = evt->data.evt_gatt_server_attribute_value.connection;
       uint8_t data_recv[50];
       size_t data_recv_len;
 
@@ -268,19 +244,8 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       }
 
       device_controll_led(data_recv,data_recv_len);
-//      sc = sl_bt_gatt_server_send_notification(handle, gattdb_led_control, data_recv_len, data_recv);
-//      sc = sl_bt_gatt_server_notify_all(gattdb_led_control, data_recv_len, data_recv);
-//      app_assert_status(sc);
-
       break;
     }
-
-    // -------------------------------
-    // This event indicates a request to display the passkey to the user.
-//    case sl_bt_evt_sm_passkey_display_id:
-//      app_log("passkey: %4ld\r\n", evt->data.evt_sm_passkey_display.passkey);
-//      break;
-
 
     // -------------------------------
     // This event triggered after the pairing or bonding procedure is
@@ -303,8 +268,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
       break;
 
-
-
     ///////////////////////////////////////////////////////////////////////////
     // Add additional event handlers here as your application requires!      //
     ///////////////////////////////////////////////////////////////////////////
@@ -316,36 +279,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
   }
 }
 
-static uint32_t make_passkey_from_address(bd_addr address)
-{
-  mbedtls_md_context_t md;
-  const mbedtls_md_info_t *md_info;
-  uint8_t hash_buffer[32];
-  int error;
-  uint32_t passkey = 0;
 
-  /* hash the result*/
-  mbedtls_md_init(&md);
-  md_info = mbedtls_md_info_from_string("SHA256");
-  if (md_info == NULL) {
-    app_log("NULL md info\r\n");
-    return 0;
-  }
-  error = mbedtls_md(md_info, address.addr, sizeof(address), hash_buffer);
-  if (error) {
-    app_log("hash error %d\r\n", error);
-  }
-  memcpy(&passkey, hash_buffer, sizeof(passkey));
-  /* restrict to 6 digits */
-  passkey %= 1000000;
-  return passkey;
-}
-
-/*
- * This function creates a new random static address and sets it to be
- * the device's identity address
- *
- */
 #ifdef USE_RANDOM_PUBLIC_ADDRESS
 static void set_random_public_address(void)
 {
