@@ -11,10 +11,15 @@ GSDK v4.4.0
 - You need to check whether the libraries for USART,mbedtls, sleep timer, and log are already included.
 - You must check file gatt_configuration.btconf in folder config both peripheral and central. You need to check your service and characteristic.
 1. Checking config file btconfig of peripheral device
+
+
 ![Alt text](picture\characteristic_name_properties_peripheral.png)
 
 2. Checking config file btconfig of central device
+
 ![Alt text](picture\characteristic_name_properties_central.png)
+
+
 
 ## Explained ideal of project
 1. Connecting process between central and peripherals
