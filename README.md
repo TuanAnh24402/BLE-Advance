@@ -7,9 +7,13 @@ GSDK v4.4.0
 - 4 BGM220P: A central device and 3 peripheral
 - A smartphone
 ## Setup
-- You can clone this project.
-- You need to check whether the libraries for USART,mbedtls, sleep timer, and log are already included.
-- You must check file gatt_configuration.btconf in folder config both peripheral and central. You need to check your service and characteristic.
+- You need to create projects: one bootloader apploader OTA and two bluetooth soc empty.
+![Alt text](picture\bootloader.png)
+
+![Alt text](picture\ble_soc_empty.png)
+
+- You need to add libraries for USART,mbedtls, sleep timer, and log are already included.
+- You should copy my file gatt_configuration.btconf in folder config both peripheral and central of my project to your project.
 1. Checking config file btconfig of peripheral device
 ![Alt text](picture\characteristic_name_properties_peripheral.png)
 
@@ -71,6 +75,19 @@ So look at the table, we can see the method of pairing process between central a
 
 - Controll led of 3 peripheral, You can enter a string such as "led 1 on", "led 2 off", "led 3 toggle"...
 ![Alt text](picture/Control%20led.jpg)
+
+## Result
+- Central connected to peripheral
+
+ ![Alt text](picture/Result%20of%20central%20connect.png)
+
+ - smartphone connected to central and controlled led of peripherals
+
+ ![Alt text](picture/smartphone%20connected.png)
+
+
+ - Three led on
+  ![Alt text](picture/3%20led%20on.jpg)
 
 
 ## Special Notes
