@@ -58,6 +58,18 @@
 
 #define MAX_CONNECTION                3
 
+#define TEMP_INVALID                  ((float)-1000)
+#define UNIT_INVALID                  ('?')
+#define UNIT_CELSIUS                  ('C')
+#define UNIT_FAHRENHEIT               ('F')
+#define CONNECTION_HANDLE_INVALID     ((uint8_t)0xFFu)
+#define SERVICE_HANDLE_INVALID        ((uint32_t)0xFFFFFFFFu)
+#define CHARACTERISTIC_HANDLE_INVALID ((uint16_t)0xFFFFu)
+#define TABLE_INDEX_INVALID           ((uint8_t)0xFFu)
+#define TX_POWER_INVALID              ((uint8_t)0x7C)
+#define TX_POWER_CONTROL_ACTIVE       ((uint8_t)0x00)
+#define TX_POWER_CONTROL_INACTIVE     ((uint8_t)0x01)
+#define PRINT_TX_POWER_DEFAULT        (false)
 
 
 typedef enum {
@@ -85,8 +97,12 @@ typedef struct {
   ble_device_t device;
   device_data_t data;
   uint8_t handle;
+  uint16_t server_address;
+  uint32_t led_service_handle;
+  uint16_t led_characteristic_handle;
   uint8_t connected_ok;
 } connection_info_t;
+
 
 /**************************************************************************//**
  * Application Init.

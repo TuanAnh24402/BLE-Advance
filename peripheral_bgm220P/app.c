@@ -49,7 +49,7 @@ uint8_t handle;                            // Connection handle
 
 uint8_t adv_data[] = {
     0x02, 0x01, 0x06,
-    0x08, 0x08, 'S', 'e', 'r', 'v', 'e', 'r', '3',
+    0x08, 0x08, 'S', 'e', 'r', 'v', 'e', 'r', '1',
     0x03, 0x03, 0xFF, 0x00,
 };
 sl_status_t sc;
@@ -58,6 +58,7 @@ sl_sleeptimer_timer_handle_t led_timer;
 extern bool led_blinking;
 static uint16_t timeout = 1000;
 static uint32_t timeout_ticks;
+extern uint8_t led_state;
 /**************************************************************************//**
  * Application Init.
  *****************************************************************************/
@@ -175,7 +176,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
       // Start advertising and enable connections.
       sc = sl_bt_legacy_advertiser_start(advertising_set_handle,
-                                               sl_bt_legacy_advertiser_connectable);
+                                         sl_bt_legacy_advertiser_connectable);
       app_log("Start advertising\n");
       app_assert_status(sc);
       break;
@@ -218,7 +219,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       sc = sl_bt_legacy_advertiser_start(advertising_set_handle,
                                          sl_bt_legacy_advertiser_connectable);
       app_log("Start advertising\n");
-
       app_assert_status(sc);
       break;
     }
@@ -235,15 +235,13 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                                                     &data_recv_len,
                                                     data_recv);
       }
-
       (void)data_recv_len;
       app_log_status_error(sc);
 
       if (sc != SL_STATUS_OK) {
         break;
       }
-
-      device_controll_led(data_recv,data_recv_len);
+      device_controll_led(data_recv);
       break;
     }
 
@@ -252,7 +250,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
     // successfully completed.
     case sl_bt_evt_sm_bonded_id:
       app_log("bond success\r\n");
-
       break;
 
     // -------------------------------
@@ -264,8 +261,16 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       app_assert(sc == SL_STATUS_OK,
                     "[E: 0x%04x] Failed to close a Bluetooth connection\n",
                     (int)sc);
+      break;
 
-
+    case sl_bt_evt_gatt_server_characteristic_status_id:
+      uint8_t connection = evt->data.evt_gatt_server_characteristic_status.connection;
+      uint16_t characteristic = evt->data.evt_gatt_server_characteristic_status.characteristic;
+//      if (evt->data.evt_gatt_server_characteristic_status.status_flags == sl_bt_gatt_server_notification) {
+//          sc = sl_bt_gatt_server_send_notification(connection, characteristic, sizeof(led_state), &led_state);
+//          app_log_status_error(sc);
+//
+//      }
       break;
 
     ///////////////////////////////////////////////////////////////////////////

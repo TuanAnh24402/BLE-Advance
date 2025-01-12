@@ -36,7 +36,6 @@
 #include <string.h>
 #include "gatt_db.h"
 
-
 // The advertising set handle allocated from Bluetooth stack.
 // Handle for the advertising set
 static uint8_t advertising_set_handle = 0xff;
@@ -44,11 +43,11 @@ bd_addr address;                           // Bluetooth device address
 uint8_t address_type;                      // Address type
 uint8_t handle;                            // Connection handle
 
-
 static conn_state_t state;
 static sl_status_t sc;
 static uint8_t live_connections = 0;
-connection_info_t conn[MAX_CONNECTION];
+static connection_info_t conn[MAX_CONNECTION];
+// Array for holding properties of multiple (parallel) connections
 
 //Target service UUID
 static const uint8_t service_uuid[2] = {0xFF, 0x00};
@@ -57,15 +56,22 @@ static const uint8_t service_uuid[2] = {0xFF, 0x00};
 static uint32_t service_handle = 0;
 static uint16_t characteristic_handle[2];
 bool check_characteristic = true;
+static uint8_t smartphone_connection = 0;
 
 static uint8_t led_state_1 = 0;
 static uint8_t led_state_2 = 0;
 static uint8_t led_state_3 = 0;
 
+static char *led_handle[MAX_CONNECTION] = {"led 1", "led 2", "led 3"};
 
+static void init_properties(void);
 static void print_bluetooth_address(void);
 static bd_addr *read_and_cache_bluetooth_address(uint8_t *address_type_out);
-
+static uint8_t find_service_in_advertisement(uint8_t *data, uint8_t len);
+static uint8_t find_index_by_connection_handle(uint8_t connection);
+static void add_connection(uint8_t connection, uint16_t address);
+// Remove a connection from the connection_properties array
+static void remove_connection(uint8_t connection);
 void sl_update_advertising_data();
 void sl_start_advertising();
 void sl_recieved_data(uint8_t connection, uint16_t characteristic, uint8array *received_value);
@@ -76,6 +82,7 @@ void sl_controll_led(uint8_t data_recv[], size_t data_recv_len);
  *****************************************************************************/
 SL_WEAK void app_init(void)
 {
+  init_properties();
   /////////////////////////////////////////////////////////////////////////////
   // Put your additional application init code here!                         //
   // This is called once during start-up.                                    //
@@ -103,11 +110,15 @@ SL_WEAK void app_process_action(void)
 void sl_bt_on_event(sl_bt_msg_t *evt)
 {
   uint32_t passkey_central = 0;
+  uint8_t table_index;
+  uint16_t addr_value;
+
   switch (SL_BT_MSG_ID(evt->header)) {
     // -------------------------------
     // This event indicates the device has started and the radio is ready.
     // Do not call any stack command before receiving this boot event!
     case sl_bt_evt_system_boot_id: {
+      sl_start_advertising();
 
       char output[100];
       sprintf(output, "Bluetooth stack booted: v%d.%d.%d-b%d\n",
@@ -156,134 +167,80 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                  "[E: 0x%04x] Failed to set bondalbe mode \n",
                  (int)sc);
 
-      sl_start_advertising();
-
       break;
     }
 
     case sl_bt_evt_scanner_legacy_advertisement_report_id:
       uint8_t *adv_data = evt->data.evt_scanner_legacy_advertisement_report.data.data;
       uint8_t adv_len = evt->data.evt_scanner_legacy_advertisement_report.data.len;
+      uint8_t event_flags = evt->data.evt_scanner_legacy_advertisement_report.event_flags;
+      if (event_flags == (SL_BT_SCANNER_EVENT_FLAG_CONNECTABLE | SL_BT_SCANNER_EVENT_FLAG_SCANNABLE)) {
+       // If a thermometer advertisement is found...
+        if (find_service_in_advertisement(adv_data, adv_len) != 0) {
+           // then stop scanning for a while
+           sc = sl_bt_scanner_stop();
+           app_assert_status(sc);
+           // and connect to that device
+           if (live_connections < MAX_CONNECTION) {
+             sc = sl_bt_connection_open(evt->data.evt_scanner_legacy_advertisement_report.address,
+                                        evt->data.evt_scanner_legacy_advertisement_report.address_type,
+                                        sl_bt_gap_phy_1m,
+                                        NULL);
 
-      uint8_t i = 0;
-      while (i < adv_len) {
-        uint8_t length = adv_data[i];
-        uint8_t ad_type = adv_data[i + 1];
-        if (ad_type == SHORT_NAME_TYPE) {
-          char name[length - 1];
-          memcpy(name, &adv_data[i + 2], length - 1);
-          name[length - 1] = '\0';
-          if (strcmp(name, TARGET_NAME_1) == 0) {
-            app_log("Found server 1, connecting..\n");
-            // Initiate connection
-            sl_bt_scanner_stop(); // Stop scanning
-            sl_bt_connection_open(evt->data.evt_scanner_legacy_advertisement_report.address,
-                                  evt->data.evt_scanner_legacy_advertisement_report.address_type,
-                                  sl_bt_gap_phy_1m,
-                                  &conn[0].handle);
-            break;
-          } else if (strcmp(name, TARGET_NAME_2) == 0) {
-            app_log("Found server 2, connecting..\n");
-            // Initiate connection
-            sl_bt_scanner_stop(); // Stop scanning
-            sl_bt_connection_open(evt->data.evt_scanner_legacy_advertisement_report.address,
-                                  evt->data.evt_scanner_legacy_advertisement_report.address_type,
-                                  sl_bt_gap_phy_1m,
-                                  &conn[1].handle);
-            break;
-          } else if (strcmp(name, TARGET_NAME_3) == 0) {
-            app_log("Found server 3, connecting..\n");
-            // Initiate connection
-            sl_bt_scanner_stop(); // Stop scanning
-            sl_bt_connection_open(evt->data.evt_scanner_legacy_advertisement_report.address,
-                                  evt->data.evt_scanner_legacy_advertisement_report.address_type,
-                                  sl_bt_gap_phy_1m,
-                                  &conn[2].handle);
-            break;
-          }
-        }
-        i += length + 1;
-      }
-
+             app_assert_status(sc);
+             state = opening;
+           }
+         }
+       }
       break;
 
     // This event indicates that a new connection was opened.
     case sl_bt_evt_connection_opened_id:
       uint8_t current_connection = evt->data.evt_connection_opened.connection;
+      bd_addr add_current_connection = evt->data.evt_connection_opened.address;
+      uint8_t type_add_connection = evt->data.evt_connection_opened.address_type;
+      app_log("Type address connection: %d\n", type_add_connection);
 
+      app_log("add current connection: %02X:%02X:%02X:%02X:%02X:%02X\n",
+              add_current_connection.addr[5],
+              add_current_connection.addr[4],
+              add_current_connection.addr[3],
+              add_current_connection.addr[2],
+              add_current_connection.addr[1],
+              add_current_connection.addr[0]);
 
-      if (current_connection == conn[0].handle) {
-        app_log("Connected to server 1\n");
-        live_connections++;
-        sc = sl_bt_gatt_discover_primary_services_by_uuid(conn[0].handle,
+      if (type_add_connection != sl_bt_gap_random_resolvable_address) {
+        app_log("Server connected\n");
+        sc = sl_bt_gatt_discover_primary_services_by_uuid(current_connection,
                                                           sizeof(service_uuid),
                                                           (const uint8_t*) service_uuid);
-        if (sc == SL_STATUS_INVALID_HANDLE) {
-          // Failed to open connection, res-tart scanning
-          app_log_warning("Primary service discovery failed with invalid handle, dropping client\n");
-          sc = sl_bt_scanner_start(sl_bt_gap_phy_1m, sl_bt_scanner_discover_generic);
-          app_assert_status(sc);
-          state = scanning;
-          break;
-        }
-        else {
-          app_assert_status(sc);
-        }
-      } else if (current_connection == conn[1].handle) {
-        app_log("Connected to server 2\n");
-        live_connections++;
-        sc = sl_bt_gatt_discover_primary_services_by_uuid(conn[1].handle,
-                                                          sizeof(service_uuid),
-                                                          (const uint8_t*) service_uuid);
-        if (sc == SL_STATUS_INVALID_HANDLE) {
-          // Failed to open connection, res-tart scanning
-          app_log_warning("Primary service discovery failed with invalid handle, dropping client\n");
-          sc = sl_bt_scanner_start(sl_bt_gap_phy_1m, sl_bt_scanner_discover_generic);
-          app_assert_status(sc);
-          state = scanning;
-          break;
-        }
-        else {
-          app_assert_status(sc);
-        }
-      } else if (current_connection == conn[2].handle) {
-        app_log("Connected to server 3\n");
-        live_connections++;
-        sc = sl_bt_gatt_discover_primary_services_by_uuid(conn[2].handle,
-                                                          sizeof(service_uuid),
-                                                          (const uint8_t*) service_uuid);
-        if (sc == SL_STATUS_INVALID_HANDLE) {
-          // Failed to open connection, res-tart scanning
-          app_log_warning("Primary service discovery failed with invalid handle, dropping client\n");
-          sc = sl_bt_scanner_start(sl_bt_gap_phy_1m, sl_bt_scanner_discover_generic);
-          app_assert_status(sc);
-          state = scanning;
-          break;
-        }
-        else {
-          app_assert_status(sc);
-        }
 
+         if (sc == SL_STATUS_INVALID_HANDLE) {
+           // Failed to open connection, res-tart scanning
+           app_log_warning("Primary service discovery failed with invalid handle, dropping client\n");
+           sc = sl_bt_scanner_start(sl_bt_gap_phy_1m, sl_bt_scanner_discover_generic);
+           app_assert_status(sc);
+           state = scanning;
+           sc = sl_bt_connection_close(current_connection);
+           app_assert_status(sc);
+           break;
+         }
+         else {
+           app_assert_status(sc);
+         }
+         // Get last two bytes of sender address
+         addr_value = (uint16_t)(evt->data.evt_connection_opened.address.addr[1] << 8) + evt->data.evt_connection_opened.address.addr[0];
+         // Add connection to the connection_properties array
+         add_connection(evt->data.evt_connection_opened.connection, addr_value);
+         state = discover_services;
       } else {
         sc = sl_bt_sm_increase_security(current_connection);
         app_assert(sc == SL_STATUS_OK,
                   "[E: 0x%04x] Failed to increasing security\n",
                   (int)sc);
-        app_log("Smartphone connected\n");
+        app_log("Smartphone is connected\n");
+        smartphone_connection = current_connection;
         sl_bt_advertiser_stop(advertising_set_handle);
-
-        break;
-      }
-
-      if (live_connections < MAX_CONNECTION) {
-        app_log("Continue scanning\n");
-        sc = sl_bt_scanner_start(sl_bt_scanner_scan_phy_1m,
-                                 sl_bt_scanner_discover_generic);
-        app_assert_status(sc);
-        state = scanning;
-      }
-      else {
-        sl_bt_scanner_stop();
       }
       break;
     // -------------------------------
@@ -292,6 +249,12 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       service_handle = evt->data.evt_gatt_service.service;
       const uint8_t *uuid = evt->data.evt_gatt_service.uuid.data;
       size_t uuid_len = evt->data.evt_gatt_service.uuid.len;
+      uint8_t connection = evt->data.evt_gatt_service.connection;
+      table_index = find_index_by_connection_handle(connection);
+      if (table_index != TABLE_INDEX_INVALID) {
+        // Save service handle for future reference
+        conn[table_index].led_service_handle = service_handle;
+      }
 
       app_log("Service found with UUID: ");
       for (size_t i = 0; i < uuid_len; i++) {
@@ -304,8 +267,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       }
       app_log("\n");
       app_log("Discovering characteristics start ...\n");
-      state = discover_services;
-
       break;
 
     // -------------------------------
@@ -314,6 +275,11 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       uint16_t handle = evt->data.evt_gatt_characteristic.characteristic;
       const uint8_t *uuid_char = evt->data.evt_gatt_characteristic.uuid.data;
       size_t uuid_char_len = evt->data.evt_gatt_characteristic.uuid.len;
+      table_index = find_index_by_connection_handle(evt->data.evt_gatt_characteristic.connection);
+      if (table_index != TABLE_INDEX_INVALID) {
+        // Save characteristic handle for future reference
+        conn[table_index].led_characteristic_handle = handle;
+      }
 
       if (uuid_char_len == UUID_CHARACTERISTIC_LENGHT) {
         uint16_t uuid16 = uuid_char[1] << 8 | uuid_char[0];
@@ -325,30 +291,33 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
         }
 
         if (index != -1) {
-            characteristic_handle[index] =  handle;
-            char output[50];
-            sprintf(output, "Saved characteristic with UUID 0x%04x at index %d\n", uuid16, index);
-            app_log(output);
-            state = discover_characteristics;
-            app_log("discover characteristics finished\n");
-            break;
+          characteristic_handle[index] =  handle;
+          char output[50];
+          sprintf(output, "Saved characteristic with UUID 0x%04x at index %d\n", uuid16, index);
+          app_log(output);
+          app_log("discover characteristics finished\n");
+          break;
         }
       }
       break;
     }
 
     case sl_bt_evt_gatt_characteristic_value_id: {
-      uint16_t characteristic = evt->data.evt_gatt_characteristic_value.characteristic;
       uint8_t connection = evt->data.evt_gatt_characteristic_value.connection;
-      uint8array *received_value = &evt->data.evt_gatt_characteristic_value.value;
-      uint16_t att_opcode = evt->data.evt_gatt_characteristic_value.att_opcode;
-      app_log("att_opcode = %d\n", att_opcode);
-      if (att_opcode == sl_bt_gatt_handle_value_notification) {
-          sl_recieved_data(connection, characteristic, received_value);
+      uint16_t characteristic = evt->data.evt_gatt_characteristic_value.characteristic;
+
+      uint8_t *value = evt->data.evt_gatt_characteristic_value.value.data;
+      table_index = find_index_by_connection_handle(connection);
+      if (table_index == TABLE_INDEX_INVALID) {
+        break;
+      }
+      if (characteristic == gattdb_led) {
+        uint8_t led_state = value[0];
+        app_log("led state: %d\n",led_state);
       }
       break;
     }
-    case sl_bt_evt_gatt_server_attribute_value_id:
+    case sl_bt_evt_gatt_server_attribute_value_id: {
       uint16_t attribute = evt->data.evt_gatt_server_attribute_value.attribute;
       uint8_t data_recv[50];
       size_t data_recv_len;
@@ -367,90 +336,67 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       if (sc != SL_STATUS_OK) {
         break;
       }
-
+//      state = discover_characteristics;
       break;
+    }
 
     // -------------------------------
     // This event is generated for various procedure completions, e.g. when a
     // write procedure is completed, or service discovery is completed
     case sl_bt_evt_gatt_procedure_completed_id: {
       uint8_t connection = evt->data.evt_gatt_procedure_completed.connection;
+      table_index = find_index_by_connection_handle(connection);
       app_log("state = %d\n",state);
-      if (state == discover_services) {
-        if (connection == conn[0].handle) {
-            app_log("Discover char 1\n");
 
-          sc = sl_bt_gatt_discover_characteristics(conn[0].handle, service_handle);
-          app_assert_status(sc);
-
-        }
-        if (connection == conn[1].handle) {
-          app_log("Discover char 2\n");
-
-          sc = sl_bt_gatt_discover_characteristics(conn[1].handle, service_handle);
-
-          app_assert_status(sc);
-
-        }
-        if (connection == conn[2].handle) {
-            app_log("Discover char 3\n");
-
-          sc = sl_bt_gatt_discover_characteristics(conn[2].handle, service_handle);
-
-          app_assert_status(sc);
-
-        }
+      // If service discovery finished
+      if (state == discover_services && conn[table_index].led_service_handle != SERVICE_HANDLE_INVALID) {
+        // Discover thermometer characteristic on the responder device
+        sc = sl_bt_gatt_discover_characteristics(connection,
+                                                 conn[table_index].led_service_handle);
+        app_assert_status(sc);
+        state = discover_characteristics;
+        break;
       }
-      if (state == discover_characteristics) {
-        if (connection == conn[0].handle) {
-          sc = sl_bt_gatt_set_characteristic_notification(conn[0].handle,
-                                                          characteristic_handle[0],
-                                                          sl_bt_gatt_notification);
-          app_log("Set Notify 1\n");
-          app_assert_status(sc);
-          state = notification;
+      if (state == discover_characteristics && conn[table_index].led_characteristic_handle != CHARACTERISTIC_HANDLE_INVALID) {
+        // stop discovering
+        sc = sl_bt_scanner_stop();
+        app_assert_status(sc);
 
+        // enable notification
+        sc = sl_bt_gatt_set_characteristic_notification(evt->data.evt_gatt_procedure_completed.connection,
+                                                        conn[table_index].led_characteristic_handle,
+                                                        sl_bt_gatt_notification);
+        app_assert_status(sc);
+        app_log("notify enable\n");
+        state = notification;
+      }
+      // If indication enable process finished
+      if (state == notification) {
+         app_log("state = %d\n",state);
+
+        // and we can connect to more devices
+        if (live_connections < MAX_CONNECTION) {
+          // start scanning again to find new devices
+          sc = sl_bt_scanner_start(sl_bt_scanner_scan_phy_1m,
+                                   sl_bt_scanner_discover_generic);
+          app_assert_status_f(sc, "Failed to start discovery #2" APP_LOG_NL);
+          state = scanning;
+        } else {
+          state = running;
         }
-        if (connection == conn[1].handle) {
-          sc = sl_bt_gatt_set_characteristic_notification(conn[1].handle,
-                                                          characteristic_handle[0],
-                                                          sl_bt_gatt_notification);
-          app_log("Set Notify 2\n");
-
-          app_assert_status(sc);
-          state = notification;
-        }
-        if (connection == conn[2].handle) {
-          sc = sl_bt_gatt_set_characteristic_notification(conn[2].handle,
-                                                          characteristic_handle[0],
-                                                          sl_bt_gatt_notification);
-          app_log("Set Notify 3\n");
-
-          app_assert_status(sc);
-          state = notification;
-
-        }
+        break;
       }
       break;
     }
     case sl_bt_evt_sm_confirm_bonding_id:{
       app_log_info("Bonding confirm\r\n");
       uint8_t connection = evt->data.evt_sm_confirm_bonding.connection;
-      if (connection == conn[0].handle) {
+      table_index = find_index_by_connection_handle(connection);
+
+      if (connection == conn[table_index].handle) {
         sc = sl_bt_sm_bonding_confirm(connection, 1);
         app_assert_status(sc);
-        app_log_info("Bonding 1 confirm\r\n");
-
-      } else if (connection == conn[1].handle) {
-        sc = sl_bt_sm_bonding_confirm(connection, 1);
-        app_assert_status(sc);
-        app_log_info("Bonding 2 confirm\r\n");
-
-      } else if (connection == conn[2].handle) {
-        sc = sl_bt_sm_bonding_confirm(connection, 1);
-        app_assert_status(sc);
-        app_log_info("Bonding 3 confirm\r\n");
-
+        app_log_info("Bonding %d confirm\r\n", table_index);
       }
       break;
     }
@@ -479,7 +425,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                     "[E: 0x%04x] Failed to enter passkey\n",
                     (int)sc);
       }
-
       break;
     }
     // -------------------------------
@@ -490,14 +435,14 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
     case sl_bt_evt_sm_bonded_id: {
       uint8_t connection = evt->data.evt_sm_bonded.connection;
-      if (connection == conn[0].handle) {
-          app_log("Bonding successful 1\r\n");
-      } else if (connection == conn[1].handle) {
-          app_log("Bonding successful 2\r\n");
-      } else if (connection == conn[2].handle){
-          app_log("Bonding successful 3\r\n");
-      }
+      table_index = find_index_by_connection_handle(connection);
 
+      if (connection == conn[table_index].handle) {
+          app_log("Bonding %d successful \r\n", table_index);
+      }
+      if (connection == smartphone_connection) {
+          app_log("bond smartphone success\r\n");
+      }
       break;
 
     }
@@ -514,31 +459,32 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
     }
     // -------------------------------
     // This event indicates that a connection was closed.
-    case sl_bt_evt_connection_closed_id:
-      if (evt->data.evt_connection_closed.connection == conn[0].handle) {
-        app_log("Connection 1 closed, restarting scan...\n");
-      } else if (evt->data.evt_connection_closed.connection == conn[1].handle) {
-        app_log("Connection 2 closed, restarting scan...\n");
-      } else if (evt->data.evt_connection_closed.connection == conn[2].handle) {
-        app_log("Connection 3 closed, restarting scan...\n");
-      } else {
-        app_log("Smartphone disconnected\n");
-        sc = sl_bt_legacy_advertiser_start(advertising_set_handle, sl_bt_legacy_advertiser_connectable);
-        app_assert_status(sc);
-        break;
+    case sl_bt_evt_connection_closed_id: {
+      // remove connection from active connections
+      uint8_t connection = evt->data.evt_connection_closed.connection;
+      if (connection == smartphone_connection) {
+          app_log("Smart phone disconnected\n");
+          // Restart advertising after client has disconnected.
+          sc = sl_bt_legacy_advertiser_start(advertising_set_handle,
+                                             sl_bt_legacy_advertiser_connectable);
+          app_log("Start advertising\n");
+
+          app_assert_status(sc);
+          break;
       }
-      // Update connection count
-      if (live_connections > 0) {
-        live_connections--;
-      }
-      // Keep scanning if connection less than 3
-      if (live_connections < MAX_CONNECTION) {
-        sc = sl_bt_scanner_start(sl_bt_scanner_scan_phy_1m, sl_bt_scanner_discover_generic);
-        app_assert_status(sc);
-        state = scanning;
+      else {
+        remove_connection(connection);
+        if (state != scanning) {
+          // start scanning again to find new devices
+          sc = sl_bt_scanner_start(sl_bt_scanner_scan_phy_1m,
+                                   sl_bt_scanner_discover_generic);
+          app_assert_status_f(sc, "Failed to start discovery #3" APP_LOG_NL);
+          state = scanning;
+        }
       }
 
       break;
+    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Add additional event handlers here as your application requires!      //
@@ -574,7 +520,6 @@ static bd_addr *read_and_cache_bluetooth_address(uint8_t *address_type_out)
   if (address_type_out) {
     *address_type_out = address_type;
   }
-
   return &address;
 }
 
@@ -663,99 +608,91 @@ void sl_recieved_data(uint8_t connection, uint16_t characteristic, uint8array *r
 
 void sl_controll_led(uint8_t data_recv[], size_t data_recv_len)
 {
-  if (data_recv_len == 8 && memcmp(data_recv, "led 1 on", 8) == 0) {
-     app_log("led 1 on\n");
-     sc = sl_bt_gatt_write_characteristic_value(conn[0].handle,
-                                                characteristic_handle[0],
-                                                data_recv_len,
-                                                data_recv);
-     app_assert_status(sc);
-  } else if (data_recv_len == 8 && memcmp(data_recv, "led 2 on", 8) == 0) {
-    app_log("led 2 on\n");
-    sc = sl_bt_gatt_write_characteristic_value(conn[1].handle,
-                                               characteristic_handle[0],
-                                               data_recv_len,
-                                               data_recv);
-    app_assert_status(sc);
-  } else if (data_recv_len == 8 && memcmp(data_recv, "led 3 on", 8) == 0) {
-    app_log("led 3 on\n");
-    sc = sl_bt_gatt_write_characteristic_value(conn[2].handle,
-                                               characteristic_handle[0],
-                                               data_recv_len,
-                                               data_recv);
-    app_assert_status(sc);
-  } else if (data_recv_len == 9 && memcmp(data_recv, "led 1 off", 9) == 0) {
 
-    app_log("led 1 off\n");
-    sc = sl_bt_gatt_write_characteristic_value(conn[0].handle,
-                                               characteristic_handle[0],
-                                               data_recv_len,
-                                               data_recv);
-    app_assert_status(sc);
-  } else if (data_recv_len == 9 && memcmp(data_recv, "led 2 off", 9) == 0) {
 
-    app_log("led 2 off\n");
-    sc = sl_bt_gatt_write_characteristic_value(conn[1].handle,
-                                               characteristic_handle[0],
-                                               data_recv_len,
-                                               data_recv);
-    app_assert_status(sc);
-  } else if (data_recv_len == 9 && memcmp(data_recv, "led 3 off", 9) == 0) {
-
-    app_log("led 3 off\n");
-    sc = sl_bt_gatt_write_characteristic_value(conn[2].handle,
-                                               characteristic_handle[0],
-                                               data_recv_len,
-                                               data_recv);
-    app_assert_status(sc);
-  } else if (data_recv_len == 12 && memcmp(data_recv, "led 1 toggle", 12) == 0) {
-    app_log("led 1 toggle\n");
-    sc = sl_bt_gatt_write_characteristic_value(conn[0].handle,
-                                               characteristic_handle[0],
-                                               data_recv_len,
-                                               data_recv);
-    app_assert_status(sc);
-  } else if (data_recv_len == 12 && memcmp(data_recv, "led 2 toggle", 12) == 0) {
-    app_log("led 2 toggle\n");
-    sc = sl_bt_gatt_write_characteristic_value(conn[1].handle,
-                                               characteristic_handle[0],
-                                               data_recv_len,
-                                               data_recv);
-    app_assert_status(sc);
-  } else if (data_recv_len == 12 && memcmp(data_recv, "led 3 toggle", 12) == 0) {
-    app_log("led 3 toggle\n");
-    sc = sl_bt_gatt_write_characteristic_value(conn[2].handle,
-                                               characteristic_handle[0],
-                                               data_recv_len,
-                                               data_recv);
-    app_assert_status(sc);
-  } else {
-    app_log("Invalid attribute value\n");
+  for (int i = 0 ;i < MAX_CONNECTION; i++) {
+    if (memcmp(data_recv, led_handle[i], 5) == 0) {
+      sc = sl_bt_gatt_write_characteristic_value(conn[i].handle,
+                                                 characteristic_handle[0],
+                                                 data_recv_len,
+                                                 data_recv);
+      app_assert_status(sc);
+    }
   }
 }
 
-
-#ifdef USE_RANDOM_PUBLIC_ADDRESS
-static void set_random_public_address(void)
+// Parse advertisements looking for advertised Health Thermometer service
+static uint8_t find_service_in_advertisement(uint8_t *data, uint8_t len)
 {
-  sl_status_t sc;
-  bd_addr address;
-  size_t data_len;
-  uint8_t data[16];
-
-  sc = sl_bt_system_get_random_data(6, sizeof(data), &data_len, data);
-  app_assert(sc == SL_STATUS_OK,
-                "[E: 0x%04x] Failed to get random data\n",
-                (int)sc);
-
-  memcpy(address.addr, data, sizeof(bd_addr));
-  /* set uppermost 2 bits to make this a random static address */
-  address.addr[5] |= 0xC0;
-
-  sc = sl_bt_system_set_identity_address(address, sl_bt_gap_static_address);
-  app_assert(sc == SL_STATUS_OK,
-                "[E: 0x%04x] Failed to set identity address\n",
-                (int)sc);
+  uint8_t ad_field_length;
+  uint8_t ad_field_type;
+  uint8_t i = 0;
+  // Parse advertisement packet
+  while (i < len) {
+    ad_field_length = data[i];
+    ad_field_type = data[i + 1];
+    // Partial ($02) or complete ($03) list of 16-bit UUIDs
+    if (ad_field_type == 0x02 || ad_field_type == 0x03) {
+      // compare UUID to service UUID
+      if (memcmp(&data[i + 2], service_uuid, 2) == 0) {
+        return 1;
+      }
+    }
+    // advance to the next AD struct
+    i = i + ad_field_length + 1;
+  }
+  return 0;
 }
-#endif
 
+// Find the index of a given connection in the connection_properties array
+static uint8_t find_index_by_connection_handle(uint8_t connection)
+{
+  for (uint8_t i = 0; i < live_connections; i++) {
+    if (conn[i].handle == connection) {
+      return i;
+    }
+  }
+  return TABLE_INDEX_INVALID;
+}
+
+// Add a new connection to the connection_properties array
+static void add_connection(uint8_t connection, uint16_t address)
+{
+  conn[live_connections].handle = connection;
+  conn[live_connections].server_address = address;
+  live_connections++;
+  app_log("live connections: %d\n", live_connections);
+}
+
+// Remove a connection from the connection_properties array
+static void remove_connection(uint8_t connection)
+{
+  uint8_t i;
+  uint8_t table_index = find_index_by_connection_handle(connection);
+
+  if (live_connections > 0) {
+    live_connections--;
+  }
+  // Shift entries after the removed connection toward 0 index
+  for (i = table_index; i < live_connections; i++) {
+      conn[i] = conn[i + 1];
+  }
+  // Clear the slots we've just removed so no junk values appear
+  for (i = live_connections; i < MAX_CONNECTION; i++) {
+      conn[i].handle = CONNECTION_HANDLE_INVALID;
+
+  }
+}
+
+// Init connection properties
+static void init_properties(void)
+{
+  uint8_t i;
+  live_connections = 0;
+
+  for (i = 0; i < MAX_CONNECTION; i++) {
+    conn[i].handle = CONNECTION_HANDLE_INVALID;
+    conn[i].led_service_handle = SERVICE_HANDLE_INVALID;
+    conn[i].led_characteristic_handle = CHARACTERISTIC_HANDLE_INVALID;
+  }
+}

@@ -35,7 +35,6 @@ void device_turn_off_led(void)
 void device_toggle_led(void)
 {
   GPIO_PinOutToggle(LED_PORT, LED_PIN);
-  led_state = 2;
 }
 
 void device_led_toggle_callback(sl_sleeptimer_timer_handle_t *handle, void *data)
@@ -48,23 +47,17 @@ void device_led_toggle_callback(sl_sleeptimer_timer_handle_t *handle, void *data
   }
 }
 
-void device_controll_led(uint8_t data_recv[], size_t data_recv_len)
+void device_controll_led(uint8_t data_recv[])
 {
-  if ((data_recv_len == 8 && memcmp(data_recv, "led 1 on", 8) == 0)||
-      (data_recv_len == 8 && memcmp(data_recv, "led 2 on", 8) == 0)||
-      (data_recv_len == 8 && memcmp(data_recv, "led 3 on", 8) == 0)) {
+  if (strstr((const char*)data_recv, "on") != NULL) {
     app_log("Led ON\n");
     led_blinking = false;
     device_turn_on_led();
-  } else if ((data_recv_len == 9 && memcmp(data_recv, "led 1 off", 9) == 0) ||
-             (data_recv_len == 9 && memcmp(data_recv, "led 2 off", 9) == 0) ||
-             (data_recv_len == 9 && memcmp(data_recv, "led 3 off", 9) == 0)) {
+  } else if (strstr((const char*)data_recv, "off") != NULL) {
     app_log("Led OFF\n");
     led_blinking = false;
     device_turn_off_led();
-  } else if ((data_recv_len == 12 && memcmp(data_recv, "led 1 toggle", 12) == 0) ||
-             (data_recv_len == 12 && memcmp(data_recv, "led 2 toggle", 12) == 0) ||
-             (data_recv_len == 12 && memcmp(data_recv, "led 3 toggle", 12) == 0)) {
+  } else if (strstr((const char*)data_recv, "toggle") != NULL) {
     led_blinking = !led_blinking;
     app_log("Led toggle\n");
   }
